@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control T - Sistema de Gestión</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <div class="logo-container">
+                    <h1>⚡ CONTROL T</h1>
+                    <span class="version">v3.2</span>
+                </div>
+                <div class="header-actions">
+                    <button id="exportarDBBtn" class="btn-secondary">
+                        <span>💾</span> Guardar DB
+                    </button>
+                    <label for="importarDB" class="btn-secondary">
+                        <span>📂</span> Cargar DB
+                        <input type="file" id="importarDB" accept=".t" hidden>
+                    </label>
+                </div>
+            </div>
+            <p class="subtitle">Sistema de Control de Parámetros - Monti & Flat</p>
+        </header>
+
+        <!-- Formulario -->
+        <section class="form-section">
+            <h2 id="formTitle">➕ NUEVO REGISTRO</h2>
+            <form id="registroForm" class="registro-form">
+                <input type="hidden" id="editId" value="">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha">📅 Fecha</label>
+                        <input type="date" id="fecha" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombre">👤 Nombre</label>
+                        <input type="text" id="nombre" required placeholder="Nombre del deporte/estilo">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tela">🧵 Tela</label>
+                        <input type="text" id="tela" required placeholder="Tipo de tela">
+                    </div>
+                    <div class="form-group">
+                        <label for="adhesivo">🔗 Adhesivo</label>
+                        <input type="text" id="adhesivo" required placeholder="Tipo de adhesivo">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group monti-group">
+                        <label>🔥 MONTI</label>
+                        <div class="sub-group">
+                            <input type="number" id="temp_monti" step="0.1" required placeholder="Temperatura °C">
+                            <input type="number" id="vel_monti" step="0.1" required placeholder="Velocidad m/min">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group flat-group">
+                        <label>📏 FLAT</label>
+                        <div class="sub-group">
+                            <input type="number" id="temp_flat" step="0.1" required placeholder="Temperatura °C">
+                            <input type="number" id="tiempo_flat" step="0.1" required placeholder="Tiempo seg">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group button-group">
+                        <button type="submit" id="submitBtn" class="btn-primary">
+                            <span>💾</span> GUARDAR
+                        </button>
+                        <button type="button" id="cancelEditBtn" class="btn-secondary" style="display: none; margin-top: 0.5rem;">
+                            <span>✕</span> CANCELAR EDICIÓN
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Filtros y Calendario -->
+        <section class="filters-section">
+            <div class="filters-header">
+                <h2>🔍 BÚSQUEDA Y FILTROS</h2>
+                <button id="imprimirReportesBtn" class="btn-print">
+                    <span>🖨️</span> REPORTE COMPLETO
+                </button>
+            </div>
+            
+            <div class="filters-grid">
+                <!-- Calendario Elegante y Compacto -->
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <h3>📅 SEMANAS</h3>
+                        <button id="limpiarFiltroBtn" class="btn-clear-filters">✕</button>
+                    </div>
+                    <div id="calendarioContainer" class="calendario-compacto">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+                
+                <!-- Buscador -->
+                <div class="search-box-container">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Buscar por cualquier dato...">
+                        <button id="clearSearch" class="btn-clear">✕</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabla de registros -->
+        <section class="table-section">
+            <div class="table-header">
+                <h2>📊 REGISTROS</h2>
+                <div class="table-stats">
+                    <span id="totalRegistros">0 registros</span>
+                    <span id="filtroActivo" class="filtro-badge" style="display: none;"></span>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="registrosTable">
+                    <thead>
+                        <tr>
+                            <th>SEM</th>
+                            <th>FECHA</th>
+                            <th>NOMBRE</th>
+                            <th>TELA</th>
+                            <th>ADHESIVO</th>
+                            <th>T° MONTI</th>
+                            <th>VEL</th>
+                            <th>T° FLAT</th>
+                            <th>T/FLAT</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="10" class="loading">Cargando registros...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal para impresión individual -->
+    <div id="modalImpresion" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🖨️ IMPRIMIR COMPROBANTE</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <select id="selectRegistroImprimir" class="select-registro">
+                    <option value="">Selecciona un registro...</option>
+                </select>
+                <button id="imprimirIndividualBtn" class="btn-primary" style="margin-top: 1rem; width: 100%;">
+                    <span>🖨️</span> IMPRIMIR EN 1/4 DE CARTA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
