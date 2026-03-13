@@ -69,7 +69,7 @@ function configurarEventos() {
     document.getElementById('cancelEditBtn').addEventListener('click', cancelarEdicion);
     
     document.getElementById('searchInput').addEventListener('input', (e) => {
-        currentSearch = e.target.value.toLowerCase();
+        currentSearch = e.target.value;
         actualizarUI();
         actualizarEstadisticas();
     });
@@ -806,41 +806,67 @@ window.filtrarPorSemana = (semana) => {
 function filtrarRegistrosArray() {
     if (!currentSearch && !currentSemana) return registros;
     
+    const termino = currentSearch.toLowerCase().trim();
+    
     return registros.filter(reg => {
-        const matchesSearch = !currentSearch || (
-            (reg.po && reg.po.toLowerCase().includes(currentSearch)) ||
-            reg.estilo.toLowerCase().includes(currentSearch) ||
-            reg.tela.toLowerCase().includes(currentSearch) ||
-            reg.cyan.toString().includes(currentSearch) ||
-            reg.magenta.toString().includes(currentSearch) ||
-            reg.yellow.toString().includes(currentSearch) ||
-            reg.black.toString().includes(currentSearch) ||
-            (reg.color1_nombre && reg.color1_nombre.toLowerCase().includes(currentSearch)) ||
-            reg.color1_valor.toString().includes(currentSearch) ||
-            (reg.color2_nombre && reg.color2_nombre.toLowerCase().includes(currentSearch)) ||
-            reg.color2_valor.toString().includes(currentSearch) ||
-            (reg.color3_nombre && reg.color3_nombre.toLowerCase().includes(currentSearch)) ||
-            reg.color3_valor.toString().includes(currentSearch) ||
-            (reg.color4_nombre && reg.color4_nombre.toLowerCase().includes(currentSearch)) ||
-            reg.color4_valor.toString().includes(currentSearch) ||
-            reg.numero_plotter.toString().includes(currentSearch) ||
-            reg.plotter_temp.toString().includes(currentSearch) ||
-            reg.plotter_humedad.toString().includes(currentSearch) ||
-            (reg.plotter_perfil && reg.plotter_perfil.toLowerCase().includes(currentSearch)) ||
-            reg.adhesivo.toLowerCase().includes(currentSearch) ||
-            reg.semana.toString().includes(currentSearch) ||
-            reg.temperatura_monti.toString().includes(currentSearch) ||
-            reg.velocidad_monti.toString().includes(currentSearch) ||
-            reg.temperatura_flat.toString().includes(currentSearch) ||
-            reg.tiempo_flat.toString().includes(currentSearch) ||
-            reg.fecha.includes(currentSearch) ||
-            formatearFecha(reg.fecha).includes(currentSearch) ||
-            reg.id.toLowerCase().includes(currentSearch)
+        // Si hay filtro de semana, aplicarlo primero
+        if (currentSemana && reg.semana != currentSemana) {
+            return false;
+        }
+        
+        // Si no hay término de búsqueda, solo aplicar filtro de semana
+        if (!termino) return true;
+        
+        // Buscar en TODOS los campos
+        return (
+            // PO
+            (reg.po && reg.po.toLowerCase().includes(termino)) ||
+            
+            // Texto
+            reg.estilo.toLowerCase().includes(termino) ||
+            reg.tela.toLowerCase().includes(termino) ||
+            
+            // CMYK (como string)
+            reg.cyan.toString().includes(termino) ||
+            reg.magenta.toString().includes(termino) ||
+            reg.yellow.toString().includes(termino) ||
+            reg.black.toString().includes(termino) ||
+            
+            // Colores extras (nombre y valor)
+            (reg.color1_nombre && reg.color1_nombre.toLowerCase().includes(termino)) ||
+            reg.color1_valor.toString().includes(termino) ||
+            (reg.color2_nombre && reg.color2_nombre.toLowerCase().includes(termino)) ||
+            reg.color2_valor.toString().includes(termino) ||
+            (reg.color3_nombre && reg.color3_nombre.toLowerCase().includes(termino)) ||
+            reg.color3_valor.toString().includes(termino) ||
+            (reg.color4_nombre && reg.color4_nombre.toLowerCase().includes(termino)) ||
+            reg.color4_valor.toString().includes(termino) ||
+            
+            // Plotter
+            reg.numero_plotter.toString().includes(termino) ||
+            reg.plotter_temp.toString().includes(termino) ||
+            reg.plotter_humedad.toString().includes(termino) ||
+            (reg.plotter_perfil && reg.plotter_perfil.toLowerCase().includes(termino)) ||
+            
+            // Adhesivo
+            reg.adhesivo.toLowerCase().includes(termino) ||
+            
+            // Semana
+            reg.semana.toString().includes(termino) ||
+            
+            // Temperaturas y tiempos
+            reg.temperatura_monti.toString().includes(termino) ||
+            reg.velocidad_monti.toString().includes(termino) ||
+            reg.temperatura_flat.toString().includes(termino) ||
+            reg.tiempo_flat.toString().includes(termino) ||
+            
+            // Fecha en diferentes formatos
+            reg.fecha.includes(termino) ||
+            formatearFecha(reg.fecha).includes(termino) ||
+            
+            // ID
+            reg.id.toLowerCase().includes(termino)
         );
-        
-        const matchesSemana = !currentSemana || reg.semana == currentSemana;
-        
-        return matchesSearch && matchesSemana;
     });
 }
 
@@ -871,7 +897,7 @@ function mostrarTabla(registrosMostrar) {
     const tbody = document.getElementById('tableBody');
     
     if (registrosMostrar.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="21" class="loading">📭 Sin resultados</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="20" class="loading">📭 Sin resultados</td></tr>';
         return;
     }
     
