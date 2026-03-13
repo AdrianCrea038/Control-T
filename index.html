@@ -16,7 +16,7 @@
             <div class="header-top">
                 <div class="logo-container">
                     <h1>⚡ CONTROL T</h1>
-                    <span class="version">v5.0</span>
+                    <span class="version">v6.1</span>
                 </div>
                 <div class="header-actions">
                     <button id="exportarDBBtn" class="btn-secondary">
@@ -76,6 +76,18 @@
                     <div class="form-group cmyk-group">
                         <label for="black">⬛ Black (K)</label>
                         <input type="number" id="black" step="1" min="0" max="100" placeholder="0-100">
+                    </div>
+                </div>
+
+                <!-- PLOTTER - AHORA ARRIBA DEL ADHESIVO -->
+                <div class="form-row plotter-row">
+                    <div class="form-group plotter-group">
+                        <label>🖨️ PLOTTER</label>
+                        <div class="plotter-subgroup">
+                            <input type="number" id="plotter_temp" step="0.1" placeholder="Temperatura °C">
+                            <input type="number" id="plotter_humedad" step="0.1" placeholder="Humedad %">
+                            <input type="text" id="plotter_perfil" placeholder="Perfil">
+                        </div>
                     </div>
                 </div>
 
@@ -147,11 +159,21 @@
                     </div>
                 </div>
                 
-                <!-- Buscador -->
+                <!-- Buscador mejorado con sugerencias -->
                 <div class="search-box-container">
                     <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="Buscar por estilo, tela, color, CMYK, temperatura...">
+                        <input type="text" id="searchInput" placeholder="🔍 Buscar por estilo, tela, color, CMYK, temperatura...">
                         <button id="clearSearch" class="btn-clear">✕</button>
+                    </div>
+                    <div class="search-hint">
+                        <span><i>🎯</i> Estilo</span>
+                        <span><i>🧵</i> Tela</span>
+                        <span><i>🎨</i> Color</span>
+                        <span><i>🖨️</i> CMYK</span>
+                        <span><i>🔥</i> Temperatura</span>
+                        <span><i>⚡</i> Velocidad</span>
+                        <span><i>📅</i> Semana</span>
+                        <span><i>🖨️</i> Plotter</span>
                     </div>
                 </div>
             </div>
@@ -179,6 +201,7 @@
                             <th>M</th>
                             <th>Y</th>
                             <th>K</th>
+                            <th>PLOTTER</th>
                             <th>ADHESIVO</th>
                             <th>T° M</th>
                             <th>VEL</th>
@@ -189,7 +212,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="15" class="loading">Cargando registros...</td>
+                            <td colspan="16" class="loading">Cargando registros...</td>
                         </tr>
                     </tbody>
                 </table>

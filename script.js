@@ -1,8 +1,8 @@
 // CONTROL T - Sistema de Gestión Premium
-// Versión 5.0 - Con CMYK, Calendario Mensual y Exportación Excel
+// Versión 6.1 - Con Plotter arriba del adhesivo y datos de ejemplo
 
 // ==================== CONFIGURACIÓN ====================
-const DB_VERSION = '5.0';
+const DB_VERSION = '6.1';
 const DB_EXTENSION = '.t';
 const SISTEMA_NOMBRE = 'CONTROL T';
 
@@ -110,6 +110,9 @@ function exportarAExcel() {
         'Magenta (M)': reg.magenta || 0,
         'Yellow (Y)': reg.yellow || 0,
         'Black (K)': reg.black || 0,
+        'Plotter Temp': reg.plotter_temp || 0,
+        'Plotter Humedad': reg.plotter_humedad || 0,
+        'Plotter Perfil': reg.plotter_perfil || '',
         'Adhesivo': reg.adhesivo,
         'Temp Monti °C': reg.temperatura_monti,
         'Vel Monti m/min': reg.velocidad_monti,
@@ -136,6 +139,9 @@ function exportarAExcel() {
         { wch: 8 },  // M
         { wch: 8 },  // Y
         { wch: 8 },  // K
+        { wch: 12 }, // Plotter Temp
+        { wch: 12 }, // Plotter Humedad
+        { wch: 15 }, // Plotter Perfil
         { wch: 15 }, // Adhesivo
         { wch: 12 }, // Temp Monti
         { wch: 12 }, // Vel Monti
@@ -157,7 +163,7 @@ function exportarAExcel() {
     mostrarNotificacion('📊 Archivo Excel generado', 'success');
 }
 
-// ==================== MANEJO DE REGISTROS CON CMYK ====================
+// ==================== MANEJO DE REGISTROS CON PLOTTER ====================
 
 function guardarRegistro(e) {
     e.preventDefault();
@@ -180,7 +186,14 @@ function guardarRegistro(e) {
         magenta: parseInt(document.getElementById('magenta').value) || 0,
         yellow: parseInt(document.getElementById('yellow').value) || 0,
         black: parseInt(document.getElementById('black').value) || 0,
+        
+        // PLOTTER datos
+        plotter_temp: parseFloat(document.getElementById('plotter_temp').value) || 0,
+        plotter_humedad: parseFloat(document.getElementById('plotter_humedad').value) || 0,
+        plotter_perfil: document.getElementById('plotter_perfil').value.toUpperCase() || '',
+        
         adhesivo: document.getElementById('adhesivo').value.toUpperCase(),
+        
         temperatura_monti: parseFloat(document.getElementById('temp_monti').value),
         velocidad_monti: parseFloat(document.getElementById('vel_monti').value),
         temperatura_flat: parseFloat(document.getElementById('temp_flat').value),
@@ -285,6 +298,12 @@ function editarRegistro(id) {
     document.getElementById('magenta').value = registro.magenta || 0;
     document.getElementById('yellow').value = registro.yellow || 0;
     document.getElementById('black').value = registro.black || 0;
+    
+    // PLOTTER datos
+    document.getElementById('plotter_temp').value = registro.plotter_temp || 0;
+    document.getElementById('plotter_humedad').value = registro.plotter_humedad || 0;
+    document.getElementById('plotter_perfil').value = registro.plotter_perfil || '';
+    
     document.getElementById('adhesivo').value = registro.adhesivo;
     document.getElementById('temp_monti').value = registro.temperatura_monti;
     document.getElementById('vel_monti').value = registro.velocidad_monti;
@@ -341,7 +360,7 @@ function eliminarRegistro(id) {
 // ==================== ALMACENAMIENTO ====================
 
 function cargarRegistrosLocal() {
-    const datosGuardados = localStorage.getItem('control_t_registros_v5');
+    const datosGuardados = localStorage.getItem('control_t_registros_v6');
     if (datosGuardados) {
         try {
             const data = JSON.parse(datosGuardados);
@@ -349,26 +368,32 @@ function cargarRegistrosLocal() {
             historialEdiciones = data.historial || {};
         } catch (e) {
             console.error('Error al cargar:', e);
-            registros = [];
+            registros = generarDatosEjemplo(); // Si hay error, generar datos de ejemplo
             historialEdiciones = {};
         }
     } else {
-        registros = generarDatosEjemplo();
+        registros = generarDatosEjemplo(); // Primera vez: generar datos de ejemplo
         guardarRegistrosLocal();
     }
 }
 
 function generarDatosEjemplo() {
     const ejemplos = [];
-    const estilos = ['LIBRE', 'MARIPOSA', 'PECHO', 'ESPALDA', 'COMBINADO'];
-    const telas = ['ALGODÓN', 'POLIÉSTER', 'NYLON', 'LANA', 'SEDA'];
-    const colores = ['ROJO', 'AZUL', 'VERDE', 'NEGRO', 'BLANCO'];
-    const adhesivos = ['TIPO A', 'TIPO B', 'TIPO C', 'TIPO D', 'TIPO E'];
+    const estilos = ['LIBRE', 'MARIPOSA', 'PECHO', 'ESPALDA', 'COMBINADO', 'MEDLEY', 'RELEVO'];
+    const telas = ['ALGODÓN', 'POLIÉSTER', 'NYLON', 'LANA', 'SEDA', 'LYCRA', 'SPANDEX'];
+    const colores = ['ROJO', 'AZUL', 'VERDE', 'NEGRO', 'BLANCO', 'AMARILLO', 'MORADO', 'NARANJA'];
+    const adhesivos = ['TIPO A', 'TIPO B', 'TIPO C', 'TIPO D', 'TIPO E', 'RESINA', 'POLIURETANO'];
+    const perfiles = ['BAJO', 'MEDIO', 'ALTO', 'CRÍTICO', 'ESTÁNDAR', 'PRO', 'PREMIUM'];
     const ahora = new Date().toISOString();
     
-    for (let i = 0; i < 20; i++) {
+    // Generar 25 registros de ejemplo
+    for (let i = 0; i < 25; i++) {
         const fecha = new Date();
         fecha.setDate(fecha.getDate() - i * 2);
+        
+        // Algunos registros con fechas anteriores para mostrar observaciones
+        const esFechaAnterior = i > 15;
+        const observacion = esFechaAnterior ? 'Registro retroactivo por ajuste de producción' : null;
         
         ejemplos.push({
             id: generarIdUnico(),
@@ -381,15 +406,40 @@ function generarDatosEjemplo() {
             magenta: Math.floor(Math.random() * 100),
             yellow: Math.floor(Math.random() * 100),
             black: Math.floor(Math.random() * 100),
+            
+            // PLOTTER datos
+            plotter_temp: 20 + Math.random() * 15,
+            plotter_humedad: 40 + Math.random() * 30,
+            plotter_perfil: perfiles[Math.floor(Math.random() * perfiles.length)],
+            
             adhesivo: adhesivos[Math.floor(Math.random() * adhesivos.length)],
+            
             temperatura_monti: 170 + Math.random() * 30,
             velocidad_monti: 2 + Math.random() * 3,
             temperatura_flat: 150 + Math.random() * 30,
             tiempo_flat: 10 + Math.random() * 15,
             creado: ahora,
             actualizado: ahora,
-            version: 1
+            version: 1,
+            observacion: observacion
         });
+    }
+    
+    // Crear algunas ediciones para mostrar historial
+    if (ejemplos.length > 3) {
+        // Simular que algunos registros tienen historial
+        for (let i = 0; i < 3; i++) {
+            const id = ejemplos[i].id;
+            historialEdiciones[id] = [
+                {
+                    fecha: new Date(Date.now() - 86400000 * 2).toISOString(),
+                    anterior: { ...ejemplos[i], version: 1 },
+                    nuevo: { ...ejemplos[i], version: 2, temperatura_monti: ejemplos[i].temperatura_monti + 5 }
+                }
+            ];
+            ejemplos[i].version = 2;
+            ejemplos[i].actualizado = new Date(Date.now() - 86400000).toISOString();
+        }
     }
     
     return ejemplos;
@@ -400,7 +450,7 @@ function guardarRegistrosLocal() {
         registros: registros,
         historial: historialEdiciones
     };
-    localStorage.setItem('control_t_registros_v5', JSON.stringify(dataToSave));
+    localStorage.setItem('control_t_registros_v6', JSON.stringify(dataToSave));
 }
 
 // ==================== EXPORTAR/IMPORTAR DB ====================
@@ -568,6 +618,9 @@ function filtrarRegistrosArray() {
             reg.magenta.toString().includes(currentSearch) ||
             reg.yellow.toString().includes(currentSearch) ||
             reg.black.toString().includes(currentSearch) ||
+            reg.plotter_temp.toString().includes(currentSearch) ||
+            reg.plotter_humedad.toString().includes(currentSearch) ||
+            (reg.plotter_perfil && reg.plotter_perfil.toLowerCase().includes(currentSearch)) ||
             reg.adhesivo.toLowerCase().includes(currentSearch) ||
             reg.semana.toString().includes(currentSearch) ||
             reg.temperatura_monti.toString().includes(currentSearch) ||
@@ -612,13 +665,18 @@ function mostrarTabla(registrosMostrar) {
     const tbody = document.getElementById('tableBody');
     
     if (registrosMostrar.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="15" class="loading">📭 Sin resultados</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="16" class="loading">📭 Sin resultados</td></tr>';
         return;
     }
     
     tbody.innerHTML = registrosMostrar.map(reg => {
         const tieneHistorial = historialEdiciones[reg.id] && historialEdiciones[reg.id].length > 0;
         const rowClass = tieneHistorial ? 'has-history' : '';
+        
+        // Formatear datos de plotter
+        const plotterText = reg.plotter_temp ? 
+            `${reg.plotter_temp.toFixed(1)}°/${reg.plotter_humedad.toFixed(0)}%/${reg.plotter_perfil}` : 
+            '-';
         
         return `
             <tr class="${rowClass}">
@@ -631,6 +689,7 @@ function mostrarTabla(registrosMostrar) {
                 <td style="color: #f472b6; font-weight: 600;">${reg.magenta || 0}</td>
                 <td style="color: #fbbf24; font-weight: 600;">${reg.yellow || 0}</td>
                 <td style="color: #9ca3af; font-weight: 600;">${reg.black || 0}</td>
+                <td><span style="background: #9c27b0; color:white; padding:0.2rem 0.5rem; border-radius:1rem; font-size:0.7rem;">${plotterText}</span></td>
                 <td>${reg.adhesivo}</td>
                 <td>${reg.temperatura_monti.toFixed(1)}°</td>
                 <td>${reg.velocidad_monti.toFixed(1)}</td>
@@ -675,6 +734,7 @@ function imprimirReportes() {
                 td { padding: 6px; border-bottom: 1px solid #000; }
                 .total { margin-top: 20px; font-weight: bold; }
                 .cmyk { font-family: monospace; }
+                .plotter-badge { background: #9c27b0; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
             </style>
         </head>
         <body>
@@ -693,6 +753,7 @@ function imprimirReportes() {
                         <th>M</th>
                         <th>Y</th>
                         <th>K</th>
+                        <th>Plotter</th>
                         <th>Adhesivo</th>
                         <th>T°M</th>
                         <th>Vel</th>
@@ -704,6 +765,10 @@ function imprimirReportes() {
     `;
     
     registrosFiltrados.forEach(reg => {
+        const plotterText = reg.plotter_temp ? 
+            `${reg.plotter_temp.toFixed(1)}°/${reg.plotter_humedad.toFixed(0)}%/${reg.plotter_perfil}` : 
+            '-';
+        
         htmlContenido += `
             <tr>
                 <td>${reg.semana}</td>
@@ -711,10 +776,11 @@ function imprimirReportes() {
                 <td>${reg.estilo}</td>
                 <td>${reg.tela}</td>
                 <td>${reg.color}</td>
-                <td class="cmyk">${reg.cyan || 0}</td>
-                <td class="cmyk">${reg.magenta || 0}</td>
-                <td class="cmyk">${reg.yellow || 0}</td>
-                <td class="cmyk">${reg.black || 0}</td>
+                <td>${reg.cyan || 0}</td>
+                <td>${reg.magenta || 0}</td>
+                <td>${reg.yellow || 0}</td>
+                <td>${reg.black || 0}</td>
+                <td>${plotterText}</td>
                 <td>${reg.adhesivo}</td>
                 <td>${reg.temperatura_monti.toFixed(1)}°</td>
                 <td>${reg.velocidad_monti.toFixed(1)}</td>
@@ -723,7 +789,7 @@ function imprimirReportes() {
             </tr>
         `;
         if (reg.observacion) {
-            htmlContenido += `<tr><td colspan="14" style="color:#666; font-style:italic;">📝 Obs: ${reg.observacion}</td></tr>`;
+            htmlContenido += `<tr><td colspan="15" style="color:#666; font-style:italic;">📝 Obs: ${reg.observacion}</td></tr>`;
         }
     });
     
@@ -745,6 +811,10 @@ function imprimirRegistroIndividual(id) {
     if (!registro) return;
     
     const ventanaImpresion = window.open('', '_blank');
+    
+    const plotterText = registro.plotter_temp ? 
+        `${registro.plotter_temp.toFixed(1)}°C / ${registro.plotter_humedad.toFixed(0)}% / ${registro.plotter_perfil}` : 
+        'No registrado';
     
     const htmlContenido = `
         <!DOCTYPE html>
@@ -773,6 +843,7 @@ function imprimirRegistroIndividual(id) {
                 .valor { width: 60%; color: #333; }
                 .cmyk-row { display: flex; gap: 10px; margin: 8px 0; }
                 .cmyk-item { flex: 1; text-align: center; padding: 5px; border-radius: 5px; font-weight: bold; }
+                .plotter-section { margin: 15px 0; padding: 10px; background: #f3e5f5; border-left: 4px solid #9c27b0; }
                 .footer { text-align: center; border-top: 2px solid #000; padding-top: 10px; font-size: 12px; color: #666; }
                 .version-info { font-size: 10px; color: #999; text-align: right; margin-top: 5px; }
                 .observacion { margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffd93d; font-style: italic; }
@@ -805,6 +876,13 @@ function imprimirRegistroIndividual(id) {
                             <div class="cmyk-item" style="background: #fbbf2420; border:1px solid #fbbf24;">Y: ${registro.yellow || 0}</div>
                             <div class="cmyk-item" style="background: #9ca3af20; border:1px solid #9ca3af;">K: ${registro.black || 0}</div>
                         </div>
+                    </div>
+                    
+                    <div class="plotter-section">
+                        <strong>🖨️ PLOTTER:</strong><br>
+                        Temperatura: ${registro.plotter_temp ? registro.plotter_temp.toFixed(1) + ' °C' : 'N/A'}<br>
+                        Humedad: ${registro.plotter_humedad ? registro.plotter_humedad.toFixed(0) + '%' : 'N/A'}<br>
+                        Perfil: ${registro.plotter_perfil || 'N/A'}
                     </div>
                     
                     <div class="fila"><span class="etiqueta">Adhesivo:</span> <span class="valor">${registro.adhesivo}</span></div>
