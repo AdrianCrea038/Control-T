@@ -16,7 +16,7 @@
             <div class="header-top">
                 <div class="logo-container">
                     <h1>⚡ CONTROL T</h1>
-                    <span class="version">v6.1</span>
+                    <span class="version">v7.0</span>
                 </div>
                 <div class="header-actions">
                     <button id="exportarDBBtn" class="btn-secondary">
@@ -43,43 +43,94 @@
                         <input type="date" id="fecha" required>
                     </div>
                     <div class="form-group">
-                        <label for="estilo">🎯 Estilo/Deporte</label>
-                        <input type="text" id="estilo" required placeholder="Nombre del estilo/deporte">
+                        <label for="po">📦 PO</label>
+                        <input type="text" id="po" placeholder="Número de PO (opcional)">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
+                        <label for="estilo">🎯 Estilo/Deporte</label>
+                        <input type="text" id="estilo" required placeholder="Nombre del estilo/deporte">
+                    </div>
+                    <div class="form-group">
                         <label for="tela">🧵 Tela</label>
                         <input type="text" id="tela" required placeholder="Tipo de tela">
                     </div>
-                    <div class="form-group">
-                        <label for="color">🎨 Color</label>
-                        <input type="text" id="color" required placeholder="Nombre del color">
-                    </div>
                 </div>
 
-                <!-- CMYK Campos -->
+                <!-- CMYK Principal -->
                 <div class="form-row cmyk-row">
                     <div class="form-group cmyk-group">
                         <label for="cyan">🟦 Cyan (C)</label>
-                        <input type="number" id="cyan" step="1" min="0" max="100" placeholder="0-100">
+                        <input type="number" id="cyan" step="0.1" min="0" max="100" placeholder="0-100">
                     </div>
                     <div class="form-group cmyk-group">
                         <label for="magenta">🟪 Magenta (M)</label>
-                        <input type="number" id="magenta" step="1" min="0" max="100" placeholder="0-100">
+                        <input type="number" id="magenta" step="0.1" min="0" max="100" placeholder="0-100">
                     </div>
                     <div class="form-group cmyk-group">
                         <label for="yellow">🟨 Yellow (Y)</label>
-                        <input type="number" id="yellow" step="1" min="0" max="100" placeholder="0-100">
+                        <input type="number" id="yellow" step="0.1" min="0" max="100" placeholder="0-100">
                     </div>
                     <div class="form-group cmyk-group">
                         <label for="black">⬛ Black (K)</label>
-                        <input type="number" id="black" step="1" min="0" max="100" placeholder="0-100">
+                        <input type="number" id="black" step="0.1" min="0" max="100" placeholder="0-100">
                     </div>
                 </div>
 
-                <!-- PLOTTER - AHORA ARRIBA DEL ADHESIVO -->
+                <!-- Botón para mostrar/ocultar colores extras -->
+                <div class="extras-toggle">
+                    <button type="button" id="toggleExtrasBtn" class="btn-secondary">
+                        <span>🎨</span> MOSTRAR COLORES EXTRAS
+                    </button>
+                </div>
+
+                <!-- 4 Colores Extras (ocultos por defecto) -->
+                <div id="extrasContainer" class="extras-container" style="display: none;">
+                    <div class="form-row cmyk-row">
+                        <div class="form-group extra-group">
+                            <label for="color1_nombre">🎨 Color 1</label>
+                            <input type="text" id="color1_nombre" placeholder="Nombre del color">
+                        </div>
+                        <div class="form-group extra-group">
+                            <label for="color1_valor">📊 Valor</label>
+                            <input type="number" id="color1_valor" step="0.1" min="0" max="100" placeholder="0-100">
+                        </div>
+                    </div>
+                    <div class="form-row cmyk-row">
+                        <div class="form-group extra-group">
+                            <label for="color2_nombre">🎨 Color 2</label>
+                            <input type="text" id="color2_nombre" placeholder="Nombre del color">
+                        </div>
+                        <div class="form-group extra-group">
+                            <label for="color2_valor">📊 Valor</label>
+                            <input type="number" id="color2_valor" step="0.1" min="0" max="100" placeholder="0-100">
+                        </div>
+                    </div>
+                    <div class="form-row cmyk-row">
+                        <div class="form-group extra-group">
+                            <label for="color3_nombre">🎨 Color 3</label>
+                            <input type="text" id="color3_nombre" placeholder="Nombre del color">
+                        </div>
+                        <div class="form-group extra-group">
+                            <label for="color3_valor">📊 Valor</label>
+                            <input type="number" id="color3_valor" step="0.1" min="0" max="100" placeholder="0-100">
+                        </div>
+                    </div>
+                    <div class="form-row cmyk-row">
+                        <div class="form-group extra-group">
+                            <label for="color4_nombre">🎨 Color 4</label>
+                            <input type="text" id="color4_nombre" placeholder="Nombre del color">
+                        </div>
+                        <div class="form-group extra-group">
+                            <label for="color4_valor">📊 Valor</label>
+                            <input type="number" id="color4_valor" step="0.1" min="0" max="100" placeholder="0-100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PLOTTER -->
                 <div class="form-row plotter-row">
                     <div class="form-group plotter-group">
                         <label>🖨️ PLOTTER</label>
@@ -162,10 +213,11 @@
                 <!-- Buscador mejorado con sugerencias -->
                 <div class="search-box-container">
                     <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="🔍 Buscar por estilo, tela, color, CMYK, temperatura...">
+                        <input type="text" id="searchInput" placeholder="🔍 Buscar por PO, estilo, tela, color, CMYK, temperatura...">
                         <button id="clearSearch" class="btn-clear">✕</button>
                     </div>
                     <div class="search-hint">
+                        <span><i>📦</i> PO</span>
                         <span><i>🎯</i> Estilo</span>
                         <span><i>🧵</i> Tela</span>
                         <span><i>🎨</i> Color</span>
@@ -192,15 +244,19 @@
                 <table id="registrosTable">
                     <thead>
                         <tr>
+                            <th>PO</th>
                             <th>SEM</th>
                             <th>FECHA</th>
                             <th>ESTILO</th>
                             <th>TELA</th>
-                            <th>COLOR</th>
                             <th>C</th>
                             <th>M</th>
                             <th>Y</th>
                             <th>K</th>
+                            <th>COLOR1</th>
+                            <th>COLOR2</th>
+                            <th>COLOR3</th>
+                            <th>COLOR4</th>
                             <th>PLOTTER</th>
                             <th>ADHESIVO</th>
                             <th>T° M</th>
@@ -212,7 +268,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="16" class="loading">Cargando registros...</td>
+                            <td colspan="20" class="loading">Cargando registros...</td>
                         </tr>
                     </tbody>
                 </table>

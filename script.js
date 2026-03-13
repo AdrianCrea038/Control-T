@@ -1,8 +1,8 @@
 // CONTROL T - Sistema de Gestión Premium
-// Versión 6.1 - Con Plotter arriba del adhesivo y datos de ejemplo
+// Versión 7.2 - Con historial compacto y mejorado
 
 // ==================== CONFIGURACIÓN ====================
-const DB_VERSION = '6.1';
+const DB_VERSION = '7.2';
 const DB_EXTENSION = '.t';
 const SISTEMA_NOMBRE = 'CONTROL T';
 
@@ -20,11 +20,27 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.getElementById('fecha').addEventListener('change', verificarFechaObservacion);
     
+    // Toggle para colores extras
+    document.getElementById('toggleExtrasBtn').addEventListener('click', toggleExtras);
+    
     cargarRegistrosLocal();
     configurarEventos();
     actualizarUI();
     actualizarEstadisticas();
 });
+
+function toggleExtras() {
+    const extrasContainer = document.getElementById('extrasContainer');
+    const toggleBtn = document.getElementById('toggleExtrasBtn');
+    
+    if (extrasContainer.style.display === 'none') {
+        extrasContainer.style.display = 'block';
+        toggleBtn.innerHTML = '<span>🎨</span> OCULTAR COLORES EXTRAS';
+    } else {
+        extrasContainer.style.display = 'none';
+        toggleBtn.innerHTML = '<span>🎨</span> MOSTRAR COLORES EXTRAS';
+    }
+}
 
 function verificarFechaObservacion() {
     const fechaSeleccionada = new Date(document.getElementById('fecha').value);
@@ -101,15 +117,19 @@ function exportarAExcel() {
     
     // Preparar datos para Excel
     const datosExcel = registrosFiltrados.map(reg => ({
+        'PO': reg.po || '',
         'Semana': reg.semana,
         'Fecha': reg.fecha,
         'Estilo/Deporte': reg.estilo,
         'Tela': reg.tela,
-        'Color': reg.color,
         'Cian (C)': reg.cyan || 0,
         'Magenta (M)': reg.magenta || 0,
         'Yellow (Y)': reg.yellow || 0,
         'Black (K)': reg.black || 0,
+        'Color 1': reg.color1_nombre ? `${reg.color1_nombre}: ${reg.color1_valor}` : '',
+        'Color 2': reg.color2_nombre ? `${reg.color2_nombre}: ${reg.color2_valor}` : '',
+        'Color 3': reg.color3_nombre ? `${reg.color3_nombre}: ${reg.color3_valor}` : '',
+        'Color 4': reg.color4_nombre ? `${reg.color4_nombre}: ${reg.color4_valor}` : '',
         'Plotter Temp': reg.plotter_temp || 0,
         'Plotter Humedad': reg.plotter_humedad || 0,
         'Plotter Perfil': reg.plotter_perfil || '',
@@ -120,6 +140,7 @@ function exportarAExcel() {
         'Tiempo Flat s': reg.tiempo_flat,
         'Observación': reg.observacion || '',
         'Versión': reg.version || 1,
+        'Descripción Edición': reg.descripcion_edicion || '',
         'Creado': new Date(reg.creado).toLocaleString(),
         'Actualizado': new Date(reg.actualizado).toLocaleString()
     }));
@@ -127,33 +148,6 @@ function exportarAExcel() {
     // Crear libro de Excel
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(datosExcel);
-    
-    // Ajustar ancho de columnas
-    const colWidths = [
-        { wch: 8 },  // Semana
-        { wch: 12 }, // Fecha
-        { wch: 20 }, // Estilo
-        { wch: 15 }, // Tela
-        { wch: 15 }, // Color
-        { wch: 8 },  // C
-        { wch: 8 },  // M
-        { wch: 8 },  // Y
-        { wch: 8 },  // K
-        { wch: 12 }, // Plotter Temp
-        { wch: 12 }, // Plotter Humedad
-        { wch: 15 }, // Plotter Perfil
-        { wch: 15 }, // Adhesivo
-        { wch: 12 }, // Temp Monti
-        { wch: 12 }, // Vel Monti
-        { wch: 12 }, // Temp Flat
-        { wch: 12 }, // Tiempo Flat
-        { wch: 30 }, // Observación
-        { wch: 10 }, // Versión
-        { wch: 20 }, // Creado
-        { wch: 20 }  // Actualizado
-    ];
-    ws['!cols'] = colWidths;
-    
     XLSX.utils.book_append_sheet(wb, ws, 'Registros CONTROL T');
     
     // Descargar archivo
@@ -163,7 +157,7 @@ function exportarAExcel() {
     mostrarNotificacion('📊 Archivo Excel generado', 'success');
 }
 
-// ==================== MANEJO DE REGISTROS CON PLOTTER ====================
+// ==================== MANEJO DE REGISTROS CON PO Y COLORES EXTRAS ====================
 
 function guardarRegistro(e) {
     e.preventDefault();
@@ -175,17 +169,35 @@ function guardarRegistro(e) {
     const ahora = new Date().toISOString();
     const observacion = document.getElementById('observacion').value;
     
+    // Obtener descripción de edición si existe
+    let descripcionEdicion = '';
+    if (editId) {
+        descripcionEdicion = prompt('📝 Describe brevemente qué cambios realizaste en esta edición:', '');
+    }
+    
     const registroData = {
         id: editId || generarIdUnico(),
+        po: document.getElementById('po').value.toUpperCase() || '',
         semana: semana,
         fecha: fechaStr,
         estilo: document.getElementById('estilo').value.toUpperCase(),
         tela: document.getElementById('tela').value.toUpperCase(),
-        color: document.getElementById('color').value.toUpperCase(),
-        cyan: parseInt(document.getElementById('cyan').value) || 0,
-        magenta: parseInt(document.getElementById('magenta').value) || 0,
-        yellow: parseInt(document.getElementById('yellow').value) || 0,
-        black: parseInt(document.getElementById('black').value) || 0,
+        
+        // CMYK con decimales
+        cyan: parseFloat(document.getElementById('cyan').value) || 0,
+        magenta: parseFloat(document.getElementById('magenta').value) || 0,
+        yellow: parseFloat(document.getElementById('yellow').value) || 0,
+        black: parseFloat(document.getElementById('black').value) || 0,
+        
+        // 4 Colores extras
+        color1_nombre: document.getElementById('color1_nombre').value.toUpperCase() || '',
+        color1_valor: parseFloat(document.getElementById('color1_valor').value) || 0,
+        color2_nombre: document.getElementById('color2_nombre').value.toUpperCase() || '',
+        color2_valor: parseFloat(document.getElementById('color2_valor').value) || 0,
+        color3_nombre: document.getElementById('color3_nombre').value.toUpperCase() || '',
+        color3_valor: parseFloat(document.getElementById('color3_valor').value) || 0,
+        color4_nombre: document.getElementById('color4_nombre').value.toUpperCase() || '',
+        color4_valor: parseFloat(document.getElementById('color4_valor').value) || 0,
         
         // PLOTTER datos
         plotter_temp: parseFloat(document.getElementById('plotter_temp').value) || 0,
@@ -201,7 +213,8 @@ function guardarRegistro(e) {
         creado: ahora,
         actualizado: ahora,
         version: 1,
-        observacion: observacion || null
+        observacion: observacion || null,
+        descripcion_edicion: descripcionEdicion || null
     };
     
     if (editId) {
@@ -215,6 +228,7 @@ function guardarRegistro(e) {
             
             historialEdiciones[editId].push({
                 fecha: ahora,
+                descripcion: descripcionEdicion || 'Edición sin descripción',
                 anterior: { ...original },
                 nuevo: { ...registroData }
             });
@@ -255,26 +269,77 @@ function verHistorial(id) {
     if (historial.length === 0) {
         html = '<p class="no-data">No hay historial de ediciones</p>';
     } else {
-        html = historial.map((entry, index) => `
-            <div class="historial-item">
-                <div class="historial-fecha">
-                    📅 ${new Date(entry.fecha).toLocaleString()}
+        html = historial.map((entry, index) => {
+            // Función para determinar estado del color
+            const getColorStatus = (valor) => {
+                if (valor < 30) return '⬆️ BAJO';
+                if (valor > 70) return '⬇️ ALTO';
+                return '✅ OK';
+            };
+            
+            return `
+                <div class="historial-item">
+                    <div class="historial-fecha" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <span>📅 ${new Date(entry.fecha).toLocaleString()}</span>
+                        <span style="color: #ffd93d; font-size: 0.8rem;">⚡ v${index + 2}</span>
+                        ${entry.descripcion ? `<span style="color: #ffd93d;">📝 ${entry.descripcion}</span>` : ''}
+                    </div>
+                    <div style="margin-top: 8px; display: flex; gap: 15px; flex-wrap: wrap;">
+                        <div style="border-left: 2px solid #ff6b6b; padding-left: 8px;">
+                            <div style="font-size:0.7rem; color:#ff6b6b;">ANTERIOR</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 3px;">
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">📦 ${entry.anterior.po || 'N/A'}</span>
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">C:${entry.anterior.cyan.toFixed(1)}</span>
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">M:${entry.anterior.magenta.toFixed(1)}</span>
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">Y:${entry.anterior.yellow.toFixed(1)}</span>
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">K:${entry.anterior.black.toFixed(1)}</span>
+                                ${entry.anterior.color1_nombre ? `<span class="color-extra-1" style="padding:2px 6px;">${entry.anterior.color1_nombre}:${entry.anterior.color1_valor.toFixed(1)} ${getColorStatus(entry.anterior.color1_valor)}</span>` : ''}
+                                ${entry.anterior.color2_nombre ? `<span class="color-extra-2" style="padding:2px 6px;">${entry.anterior.color2_nombre}:${entry.anterior.color2_valor.toFixed(1)} ${getColorStatus(entry.anterior.color2_valor)}</span>` : ''}
+                                ${entry.anterior.color3_nombre ? `<span class="color-extra-3" style="padding:2px 6px;">${entry.anterior.color3_nombre}:${entry.anterior.color3_valor.toFixed(1)} ${getColorStatus(entry.anterior.color3_valor)}</span>` : ''}
+                                ${entry.anterior.color4_nombre ? `<span class="color-extra-4" style="padding:2px 6px;">${entry.anterior.color4_nombre}:${entry.anterior.color4_valor.toFixed(1)} ${getColorStatus(entry.anterior.color4_valor)}</span>` : ''}
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">🖨️ ${entry.anterior.plotter_temp.toFixed(1)}°/${entry.anterior.plotter_humedad.toFixed(0)}%</span>
+                            </div>
+                        </div>
+                        <div style="border-left: 2px solid #4caf50; padding-left: 8px;">
+                            <div style="font-size:0.7rem; color:#4caf50;">NUEVO</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 3px;">
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">📦 ${entry.nuevo.po || 'N/A'}</span>
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">C:${entry.nuevo.cyan.toFixed(1)}</span>
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">M:${entry.nuevo.magenta.toFixed(1)}</span>
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">Y:${entry.nuevo.yellow.toFixed(1)}</span>
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">K:${entry.nuevo.black.toFixed(1)}</span>
+                                ${entry.nuevo.color1_nombre ? `<span class="color-extra-1" style="padding:2px 6px;">${entry.nuevo.color1_nombre}:${entry.nuevo.color1_valor.toFixed(1)} ${getColorStatus(entry.nuevo.color1_valor)}</span>` : ''}
+                                ${entry.nuevo.color2_nombre ? `<span class="color-extra-2" style="padding:2px 6px;">${entry.nuevo.color2_nombre}:${entry.nuevo.color2_valor.toFixed(1)} ${getColorStatus(entry.nuevo.color2_valor)}</span>` : ''}
+                                ${entry.nuevo.color3_nombre ? `<span class="color-extra-3" style="padding:2px 6px;">${entry.nuevo.color3_nombre}:${entry.nuevo.color3_valor.toFixed(1)} ${getColorStatus(entry.nuevo.color3_valor)}</span>` : ''}
+                                ${entry.nuevo.color4_nombre ? `<span class="color-extra-4" style="padding:2px 6px;">${entry.nuevo.color4_nombre}:${entry.nuevo.color4_valor.toFixed(1)} ${getColorStatus(entry.nuevo.color4_valor)}</span>` : ''}
+                                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">🖨️ ${entry.nuevo.plotter_temp.toFixed(1)}°/${entry.nuevo.plotter_humedad.toFixed(0)}%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="historial-cambios">
-                    <strong>Versión ${index + 2}</strong><br>
-                    <small>De: v${index + 1} → v${index + 2}</small>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
     
+    // Versión actual
     html += `
         <div class="historial-item" style="border-color: #ffd93d;">
-            <div class="historial-fecha" style="color: #ffd93d;">
-                ⚡ VERSIÓN ACTUAL ${registro.version}
+            <div class="historial-fecha" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="color: #ffd93d;">⚡ VERSIÓN ACTUAL ${registro.version}</span>
+                <span>${new Date(registro.actualizado).toLocaleString()}</span>
+                ${registro.descripcion_edicion ? `<span style="color: #ffd93d;">📝 ${registro.descripcion_edicion}</span>` : ''}
             </div>
-            <div class="historial-cambios">
-                Última modificación: ${new Date(registro.actualizado).toLocaleString()}
+            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">📦 ${registro.po || 'N/A'}</span>
+                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">C:${registro.cyan.toFixed(1)}</span>
+                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">M:${registro.magenta.toFixed(1)}</span>
+                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">Y:${registro.yellow.toFixed(1)}</span>
+                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">K:${registro.black.toFixed(1)}</span>
+                ${registro.color1_nombre ? `<span class="color-extra-1" style="padding:2px 6px;">${registro.color1_nombre}:${registro.color1_valor.toFixed(1)}</span>` : ''}
+                ${registro.color2_nombre ? `<span class="color-extra-2" style="padding:2px 6px;">${registro.color2_nombre}:${registro.color2_valor.toFixed(1)}</span>` : ''}
+                ${registro.color3_nombre ? `<span class="color-extra-3" style="padding:2px 6px;">${registro.color3_nombre}:${registro.color3_valor.toFixed(1)}</span>` : ''}
+                ${registro.color4_nombre ? `<span class="color-extra-4" style="padding:2px 6px;">${registro.color4_nombre}:${registro.color4_valor.toFixed(1)}</span>` : ''}
+                <span style="background:#2a2a2a; padding:2px 6px; border-radius:4px;">🖨️ ${registro.plotter_temp.toFixed(1)}°/${registro.plotter_humedad.toFixed(0)}%</span>
             </div>
         </div>
     `;
@@ -290,16 +355,28 @@ function editarRegistro(id) {
     editandoId = id;
     document.getElementById('editId').value = id;
     
+    document.getElementById('po').value = registro.po || '';
     document.getElementById('fecha').value = registro.fecha;
     document.getElementById('estilo').value = registro.estilo;
     document.getElementById('tela').value = registro.tela;
-    document.getElementById('color').value = registro.color;
+    
+    // CMYK
     document.getElementById('cyan').value = registro.cyan || 0;
     document.getElementById('magenta').value = registro.magenta || 0;
     document.getElementById('yellow').value = registro.yellow || 0;
     document.getElementById('black').value = registro.black || 0;
     
-    // PLOTTER datos
+    // Colores extras
+    document.getElementById('color1_nombre').value = registro.color1_nombre || '';
+    document.getElementById('color1_valor').value = registro.color1_valor || 0;
+    document.getElementById('color2_nombre').value = registro.color2_nombre || '';
+    document.getElementById('color2_valor').value = registro.color2_valor || 0;
+    document.getElementById('color3_nombre').value = registro.color3_nombre || '';
+    document.getElementById('color3_valor').value = registro.color3_valor || 0;
+    document.getElementById('color4_nombre').value = registro.color4_nombre || '';
+    document.getElementById('color4_valor').value = registro.color4_valor || 0;
+    
+    // PLOTTER
     document.getElementById('plotter_temp').value = registro.plotter_temp || 0;
     document.getElementById('plotter_humedad').value = registro.plotter_humedad || 0;
     document.getElementById('plotter_perfil').value = registro.plotter_perfil || '';
@@ -313,6 +390,12 @@ function editarRegistro(id) {
     verificarFechaObservacion();
     if (registro.observacion) {
         document.getElementById('observacion').value = registro.observacion;
+    }
+    
+    // Si tiene colores extras, mostrar el contenedor
+    if (registro.color1_nombre || registro.color2_nombre || registro.color3_nombre || registro.color4_nombre) {
+        document.getElementById('extrasContainer').style.display = 'block';
+        document.getElementById('toggleExtrasBtn').innerHTML = '<span>🎨</span> OCULTAR COLORES EXTRAS';
     }
     
     document.getElementById('formTitle').innerHTML = '✏️ EDITANDO REGISTRO';
@@ -334,6 +417,8 @@ function resetFormulario() {
     document.getElementById('registroForm').reset();
     document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
     document.getElementById('observacionContainer').style.display = 'none';
+    document.getElementById('extrasContainer').style.display = 'none';
+    document.getElementById('toggleExtrasBtn').innerHTML = '<span>🎨</span> MOSTRAR COLORES EXTRAS';
     
     document.getElementById('formTitle').innerHTML = '➕ NUEVO REGISTRO';
     document.getElementById('submitBtn').innerHTML = '<span>💾</span> GUARDAR';
@@ -360,7 +445,7 @@ function eliminarRegistro(id) {
 // ==================== ALMACENAMIENTO ====================
 
 function cargarRegistrosLocal() {
-    const datosGuardados = localStorage.getItem('control_t_registros_v6');
+    const datosGuardados = localStorage.getItem('control_t_registros_v7');
     if (datosGuardados) {
         try {
             const data = JSON.parse(datosGuardados);
@@ -368,56 +453,131 @@ function cargarRegistrosLocal() {
             historialEdiciones = data.historial || {};
         } catch (e) {
             console.error('Error al cargar:', e);
-            registros = generarDatosEjemplo(); // Si hay error, generar datos de ejemplo
+            registros = generarDatosEjemplo();
             historialEdiciones = {};
         }
     } else {
-        registros = generarDatosEjemplo(); // Primera vez: generar datos de ejemplo
+        registros = generarDatosEjemplo();
         guardarRegistrosLocal();
     }
 }
 
 function generarDatosEjemplo() {
     const ejemplos = [];
-    const estilos = ['LIBRE', 'MARIPOSA', 'PECHO', 'ESPALDA', 'COMBINADO', 'MEDLEY', 'RELEVO'];
-    const telas = ['ALGODÓN', 'POLIÉSTER', 'NYLON', 'LANA', 'SEDA', 'LYCRA', 'SPANDEX'];
-    const colores = ['ROJO', 'AZUL', 'VERDE', 'NEGRO', 'BLANCO', 'AMARILLO', 'MORADO', 'NARANJA'];
-    const adhesivos = ['TIPO A', 'TIPO B', 'TIPO C', 'TIPO D', 'TIPO E', 'RESINA', 'POLIURETANO'];
-    const perfiles = ['BAJO', 'MEDIO', 'ALTO', 'CRÍTICO', 'ESTÁNDAR', 'PRO', 'PREMIUM'];
+    
+    // Datos realistas para demostración
+    const pos = [
+        'PO-2401-001', 'PO-2401-002', 'PO-2402-015', 'PO-2402-023', 'PO-2403-008',
+        'PO-2403-012', 'PO-2404-031', 'PO-2404-045', 'PO-2405-017', 'PO-2405-022',
+        'PO-2406-003', 'PO-2406-018', 'PO-2407-009', 'PO-2407-034', 'PO-2408-011'
+    ];
+    
+    const estilos = [
+        'LIBRE', 'MARIPOSA', 'PECHO', 'ESPALDA', 'COMBINADO',
+        'MEDLEY 200M', 'RELEVO 4X100', 'LIBRE JUVENIL', 'MARIPOSA INFANTIL', 'PECHO MASTER',
+        'ESPALDA JUVENIL', 'COMBINADO MASTER', 'LIBRE MASTER', 'MARIPOSA JUVENIL', 'RELEVO MIXTO'
+    ];
+    
+    const telas = [
+        'ALGODÓN 100%', 'POLIÉSTER RECICLADO', 'NYLON TECNICO', 'LYCRA POWER', 'SPANDEX PRO',
+        'ALGODÓN/POLIÉSTER 60/40', 'NYLON/SPANDEX 80/20', 'MICROFIBRA', 'PIQUE', 'JERSEY',
+        'SUPLEX', 'COOLMAX', 'THERMAL', 'WINDPROOF', 'AQUABLOCK'
+    ];
+    
+    const colores = [
+        'ROJO', 'AZUL', 'VERDE', 'NEGRO', 'BLANCO',
+        'AMARILLO', 'MORADO', 'NARANJA', 'ROSADO', 'GRIS',
+        'TURQUESA', 'BURDEOS', 'OLIVA', 'DORADO', 'PLATEADO'
+    ];
+    
+    const adhesivos = [
+        'ST-100', 'ST-200', 'HT-45', 'HT-60', 'LT-30',
+        'LT-50', 'XTREME 100', 'XTREME 200', 'PRO 300', 'PRO 400',
+        'FLEX 50', 'FLEX 75', 'SOFT 30', 'SOFT 50', 'HARD 80'
+    ];
+    
+    const perfiles = [
+        'BAJO CONSUMO', 'MEDIO ESTÁNDAR', 'ALTO RENDIMIENTO', 'CRÍTICO', 'PREMIUM',
+        'PROFESIONAL', 'COMPETICIÓN', 'ENTRENAMIENTO', 'RECREATIVO', 'ÉLITE'
+    ];
+    
+    const coloresExtras = [
+        ['DORADO METÁLICO', 'PLATEADO BRILLO', 'BRONCE ANTIGUO', 'COBRE MODERNO'],
+        ['AZUL ELÉCTRICO', 'VERDE NEÓN', 'ROJO FUEGO', 'AMARILLO SOL'],
+        ['MORADO REAL', 'TURQUESA MARINA', 'CORAL VIBRANTE', 'ESMERALDA'],
+        ['NEGRO MATE', 'BLANCO PERLA', 'GRIS CARBÓN', 'BEIGE CLARO'],
+        ['ROSA CHICLE', 'LILA SUAVE', 'MELOCOTÓN', 'MENTA']
+    ];
+    
     const ahora = new Date().toISOString();
     
-    // Generar 25 registros de ejemplo
-    for (let i = 0; i < 25; i++) {
+    // Generar 30 registros de ejemplo
+    for (let i = 0; i < 30; i++) {
         const fecha = new Date();
-        fecha.setDate(fecha.getDate() - i * 2);
+        // Fechas distribuidas en los últimos 60 días
+        fecha.setDate(fecha.getDate() - (i * 2) - Math.floor(Math.random() * 5));
         
         // Algunos registros con fechas anteriores para mostrar observaciones
-        const esFechaAnterior = i > 15;
-        const observacion = esFechaAnterior ? 'Registro retroactivo por ajuste de producción' : null;
+        const esFechaAnterior = i > 20;
+        let observacion = null;
+        if (esFechaAnterior) {
+            const razones = [
+                'Ajuste por producción retrasada',
+                'Registro retroactivo por control de calidad',
+                'Corrección de fecha por error administrativo',
+                'Registro de muestra de laboratorio',
+                'Prueba de prototipo'
+            ];
+            observacion = razones[Math.floor(Math.random() * razones.length)];
+        }
+        
+        // Seleccionar colores extras aleatorios (algunos registros tienen, otros no)
+        const extraIndex = Math.floor(Math.random() * coloresExtras.length);
+        const tieneExtras = i % 3 === 0; // 1 de cada 3 tiene colores extras
+        
+        // Valores CMYK con decimales
+        const cyan = Math.random() * 100;
+        const magenta = Math.random() * 100;
+        const yellow = Math.random() * 100;
+        const black = Math.random() * 100;
+        
+        // Valores de plotter
+        const plotterTemp = 18 + Math.random() * 15;
+        const plotterHum = 35 + Math.random() * 25;
         
         ejemplos.push({
             id: generarIdUnico(),
+            po: i % 2 === 0 ? pos[Math.floor(Math.random() * pos.length)] : '', // La mitad tienen PO
             semana: obtenerSemana(fecha),
             fecha: fecha.toISOString().split('T')[0],
             estilo: estilos[Math.floor(Math.random() * estilos.length)],
             tela: telas[Math.floor(Math.random() * telas.length)],
-            color: colores[Math.floor(Math.random() * colores.length)],
-            cyan: Math.floor(Math.random() * 100),
-            magenta: Math.floor(Math.random() * 100),
-            yellow: Math.floor(Math.random() * 100),
-            black: Math.floor(Math.random() * 100),
             
-            // PLOTTER datos
-            plotter_temp: 20 + Math.random() * 15,
-            plotter_humedad: 40 + Math.random() * 30,
+            // CMYK con decimales
+            cyan: parseFloat(cyan.toFixed(1)),
+            magenta: parseFloat(magenta.toFixed(1)),
+            yellow: parseFloat(yellow.toFixed(1)),
+            black: parseFloat(black.toFixed(1)),
+            
+            // Colores extras (solo algunos registros)
+            color1_nombre: tieneExtras ? coloresExtras[extraIndex][0] : '',
+            color1_valor: tieneExtras ? parseFloat((Math.random() * 100).toFixed(1)) : 0,
+            color2_nombre: tieneExtras ? coloresExtras[extraIndex][1] : '',
+            color2_valor: tieneExtras ? parseFloat((Math.random() * 100).toFixed(1)) : 0,
+            color3_nombre: tieneExtras ? coloresExtras[extraIndex][2] : '',
+            color3_valor: tieneExtras ? parseFloat((Math.random() * 100).toFixed(1)) : 0,
+            color4_nombre: tieneExtras ? coloresExtras[extraIndex][3] : '',
+            color4_valor: tieneExtras ? parseFloat((Math.random() * 100).toFixed(1)) : 0,
+            
+            plotter_temp: parseFloat(plotterTemp.toFixed(1)),
+            plotter_humedad: parseFloat(plotterHum.toFixed(0)),
             plotter_perfil: perfiles[Math.floor(Math.random() * perfiles.length)],
             
             adhesivo: adhesivos[Math.floor(Math.random() * adhesivos.length)],
-            
-            temperatura_monti: 170 + Math.random() * 30,
-            velocidad_monti: 2 + Math.random() * 3,
-            temperatura_flat: 150 + Math.random() * 30,
-            tiempo_flat: 10 + Math.random() * 15,
+            temperatura_monti: parseFloat((170 + Math.random() * 30).toFixed(1)),
+            velocidad_monti: parseFloat((2 + Math.random() * 3).toFixed(1)),
+            temperatura_flat: parseFloat((150 + Math.random() * 30).toFixed(1)),
+            tiempo_flat: parseFloat((10 + Math.random() * 15).toFixed(1)),
             creado: ahora,
             actualizado: ahora,
             version: 1,
@@ -425,21 +585,44 @@ function generarDatosEjemplo() {
         });
     }
     
-    // Crear algunas ediciones para mostrar historial
-    if (ejemplos.length > 3) {
-        // Simular que algunos registros tienen historial
-        for (let i = 0; i < 3; i++) {
-            const id = ejemplos[i].id;
-            historialEdiciones[id] = [
-                {
-                    fecha: new Date(Date.now() - 86400000 * 2).toISOString(),
-                    anterior: { ...ejemplos[i], version: 1 },
-                    nuevo: { ...ejemplos[i], version: 2, temperatura_monti: ejemplos[i].temperatura_monti + 5 }
+    // Ordenar por fecha (más reciente primero)
+    ejemplos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    
+    // Crear historial para algunos registros
+    for (let i = 0; i < 5; i++) {
+        const id = ejemplos[i].id;
+        const fechaEdit = new Date();
+        fechaEdit.setDate(fechaEdit.getDate() - Math.floor(Math.random() * 10));
+        
+        const descripciones = [
+            'Corrección de temperatura',
+            'Ajuste de CMYK por muestrario',
+            'Actualización de PO',
+            'Cambio en perfil de plotter',
+            'Revisión de adhesivo'
+        ];
+        
+        historialEdiciones[id] = [
+            {
+                fecha: fechaEdit.toISOString(),
+                descripcion: descripciones[Math.floor(Math.random() * descripciones.length)],
+                anterior: { ...ejemplos[i] },
+                nuevo: { 
+                    ...ejemplos[i], 
+                    version: 2,
+                    temperatura_monti: ejemplos[i].temperatura_monti + 2.5,
+                    cyan: ejemplos[i].cyan + 5.2,
+                    magenta: ejemplos[i].magenta - 3.8,
+                    descripcion_edicion: descripciones[Math.floor(Math.random() * descripciones.length)]
                 }
-            ];
-            ejemplos[i].version = 2;
-            ejemplos[i].actualizado = new Date(Date.now() - 86400000).toISOString();
-        }
+            }
+        ];
+        
+        ejemplos[i].version = 2;
+        ejemplos[i].actualizado = fechaEdit.toISOString();
+        ejemplos[i].descripcion_edicion = descripciones[Math.floor(Math.random() * descripciones.length)];
+        ejemplos[i].cyan = ejemplos[i].cyan + 5.2;
+        ejemplos[i].magenta = ejemplos[i].magenta - 3.8;
     }
     
     return ejemplos;
@@ -450,7 +633,7 @@ function guardarRegistrosLocal() {
         registros: registros,
         historial: historialEdiciones
     };
-    localStorage.setItem('control_t_registros_v6', JSON.stringify(dataToSave));
+    localStorage.setItem('control_t_registros_v7', JSON.stringify(dataToSave));
 }
 
 // ==================== EXPORTAR/IMPORTAR DB ====================
@@ -611,13 +794,21 @@ function filtrarRegistrosArray() {
     
     return registros.filter(reg => {
         const matchesSearch = !currentSearch || (
+            (reg.po && reg.po.toLowerCase().includes(currentSearch)) ||
             reg.estilo.toLowerCase().includes(currentSearch) ||
             reg.tela.toLowerCase().includes(currentSearch) ||
-            reg.color.toLowerCase().includes(currentSearch) ||
             reg.cyan.toString().includes(currentSearch) ||
             reg.magenta.toString().includes(currentSearch) ||
             reg.yellow.toString().includes(currentSearch) ||
             reg.black.toString().includes(currentSearch) ||
+            (reg.color1_nombre && reg.color1_nombre.toLowerCase().includes(currentSearch)) ||
+            reg.color1_valor.toString().includes(currentSearch) ||
+            (reg.color2_nombre && reg.color2_nombre.toLowerCase().includes(currentSearch)) ||
+            reg.color2_valor.toString().includes(currentSearch) ||
+            (reg.color3_nombre && reg.color3_nombre.toLowerCase().includes(currentSearch)) ||
+            reg.color3_valor.toString().includes(currentSearch) ||
+            (reg.color4_nombre && reg.color4_nombre.toLowerCase().includes(currentSearch)) ||
+            reg.color4_valor.toString().includes(currentSearch) ||
             reg.plotter_temp.toString().includes(currentSearch) ||
             reg.plotter_humedad.toString().includes(currentSearch) ||
             (reg.plotter_perfil && reg.plotter_perfil.toLowerCase().includes(currentSearch)) ||
@@ -665,7 +856,7 @@ function mostrarTabla(registrosMostrar) {
     const tbody = document.getElementById('tableBody');
     
     if (registrosMostrar.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="16" class="loading">📭 Sin resultados</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="20" class="loading">📭 Sin resultados</td></tr>';
         return;
     }
     
@@ -678,17 +869,27 @@ function mostrarTabla(registrosMostrar) {
             `${reg.plotter_temp.toFixed(1)}°/${reg.plotter_humedad.toFixed(0)}%/${reg.plotter_perfil}` : 
             '-';
         
+        // Formatear colores extras
+        const color1 = reg.color1_nombre ? `<span class="color-extra-1">${reg.color1_nombre}:${reg.color1_valor.toFixed(1)}</span>` : '-';
+        const color2 = reg.color2_nombre ? `<span class="color-extra-2">${reg.color2_nombre}:${reg.color2_valor.toFixed(1)}</span>` : '-';
+        const color3 = reg.color3_nombre ? `<span class="color-extra-3">${reg.color3_nombre}:${reg.color3_valor.toFixed(1)}</span>` : '-';
+        const color4 = reg.color4_nombre ? `<span class="color-extra-4">${reg.color4_nombre}:${reg.color4_valor.toFixed(1)}</span>` : '-';
+        
         return `
             <tr class="${rowClass}">
-                <td><strong>${reg.semana}</strong></td>
+                <td><span class="po-badge">${reg.po || '-'}</span></td>
+                <td>${reg.semana}</td>
                 <td>${formatearFecha(reg.fecha)}</td>
                 <td>${reg.estilo}</td>
                 <td>${reg.tela}</td>
-                <td>${reg.color}</td>
-                <td style="color: #60a5fa; font-weight: 600;">${reg.cyan || 0}</td>
-                <td style="color: #f472b6; font-weight: 600;">${reg.magenta || 0}</td>
-                <td style="color: #fbbf24; font-weight: 600;">${reg.yellow || 0}</td>
-                <td style="color: #9ca3af; font-weight: 600;">${reg.black || 0}</td>
+                <td style="color: #60a5fa; font-weight: 600;">${reg.cyan.toFixed(1)}</td>
+                <td style="color: #f472b6; font-weight: 600;">${reg.magenta.toFixed(1)}</td>
+                <td style="color: #fbbf24; font-weight: 600;">${reg.yellow.toFixed(1)}</td>
+                <td style="color: #9ca3af; font-weight: 600;">${reg.black.toFixed(1)}</td>
+                <td>${color1}</td>
+                <td>${color2}</td>
+                <td>${color3}</td>
+                <td>${color4}</td>
                 <td><span style="background: #9c27b0; color:white; padding:0.2rem 0.5rem; border-radius:1rem; font-size:0.7rem;">${plotterText}</span></td>
                 <td>${reg.adhesivo}</td>
                 <td>${reg.temperatura_monti.toFixed(1)}°</td>
@@ -729,12 +930,11 @@ function imprimirReportes() {
             <style>
                 body { font-family: Arial; margin: 0.5in; background: white; color: black; }
                 h1 { color: #000; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
-                th { background: #000; color: white; padding: 8px; text-align: left; }
-                td { padding: 6px; border-bottom: 1px solid #000; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 9px; }
+                th { background: #000; color: white; padding: 4px; text-align: left; }
+                td { padding: 3px; border-bottom: 1px solid #000; }
                 .total { margin-top: 20px; font-weight: bold; }
-                .cmyk { font-family: monospace; }
-                .plotter-badge { background: #9c27b0; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
+                .po { font-weight: bold; }
             </style>
         </head>
         <body>
@@ -744,17 +944,21 @@ function imprimirReportes() {
             <table>
                 <thead>
                     <tr>
+                        <th>PO</th>
                         <th>Sem</th>
                         <th>Fecha</th>
                         <th>Estilo</th>
                         <th>Tela</th>
-                        <th>Color</th>
                         <th>C</th>
                         <th>M</th>
                         <th>Y</th>
                         <th>K</th>
+                        <th>Color1</th>
+                        <th>Color2</th>
+                        <th>Color3</th>
+                        <th>Color4</th>
                         <th>Plotter</th>
-                        <th>Adhesivo</th>
+                        <th>Adh</th>
                         <th>T°M</th>
                         <th>Vel</th>
                         <th>T°F</th>
@@ -766,20 +970,29 @@ function imprimirReportes() {
     
     registrosFiltrados.forEach(reg => {
         const plotterText = reg.plotter_temp ? 
-            `${reg.plotter_temp.toFixed(1)}°/${reg.plotter_humedad.toFixed(0)}%/${reg.plotter_perfil}` : 
+            `${reg.plotter_temp.toFixed(1)}°/${reg.plotter_humedad.toFixed(0)}%` : 
             '-';
+        
+        const color1 = reg.color1_nombre ? `${reg.color1_nombre}:${reg.color1_valor.toFixed(1)}` : '-';
+        const color2 = reg.color2_nombre ? `${reg.color2_nombre}:${reg.color2_valor.toFixed(1)}` : '-';
+        const color3 = reg.color3_nombre ? `${reg.color3_nombre}:${reg.color3_valor.toFixed(1)}` : '-';
+        const color4 = reg.color4_nombre ? `${reg.color4_nombre}:${reg.color4_valor.toFixed(1)}` : '-';
         
         htmlContenido += `
             <tr>
+                <td class="po">${reg.po || '-'}</td>
                 <td>${reg.semana}</td>
                 <td>${formatearFecha(reg.fecha)}</td>
                 <td>${reg.estilo}</td>
                 <td>${reg.tela}</td>
-                <td>${reg.color}</td>
-                <td>${reg.cyan || 0}</td>
-                <td>${reg.magenta || 0}</td>
-                <td>${reg.yellow || 0}</td>
-                <td>${reg.black || 0}</td>
+                <td>${reg.cyan.toFixed(1)}</td>
+                <td>${reg.magenta.toFixed(1)}</td>
+                <td>${reg.yellow.toFixed(1)}</td>
+                <td>${reg.black.toFixed(1)}</td>
+                <td>${color1}</td>
+                <td>${color2}</td>
+                <td>${color3}</td>
+                <td>${color4}</td>
                 <td>${plotterText}</td>
                 <td>${reg.adhesivo}</td>
                 <td>${reg.temperatura_monti.toFixed(1)}°</td>
@@ -788,9 +1001,6 @@ function imprimirReportes() {
                 <td>${reg.tiempo_flat.toFixed(1)}s</td>
             </tr>
         `;
-        if (reg.observacion) {
-            htmlContenido += `<tr><td colspan="15" style="color:#666; font-style:italic;">📝 Obs: ${reg.observacion}</td></tr>`;
-        }
     });
     
     htmlContenido += `
@@ -837,16 +1047,15 @@ function imprimirRegistroIndividual(id) {
                 .barcode-container { text-align: center; margin: 20px 0; padding: 15px 0; border-top: 2px dashed #000; border-bottom: 2px dashed #000; }
                 .barcode-container svg { max-width: 100%; height: auto; }
                 .id-text { text-align: center; font-size: 14px; color: #333; margin-top: 5px; font-family: monospace; }
+                .po-destacado { background: #000; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; display: inline-block; margin: 10px 0; }
                 .detalles { margin: 20px 0; }
                 .fila { display: flex; margin: 8px 0; padding: 8px; background: #f5f5f5; border-radius: 5px; }
                 .etiqueta { font-weight: bold; width: 40%; color: #000; }
                 .valor { width: 60%; color: #333; }
-                .cmyk-row { display: flex; gap: 10px; margin: 8px 0; }
-                .cmyk-item { flex: 1; text-align: center; padding: 5px; border-radius: 5px; font-weight: bold; }
-                .plotter-section { margin: 15px 0; padding: 10px; background: #f3e5f5; border-left: 4px solid #9c27b0; }
+                .colores-extras { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0; }
+                .color-box { padding: 10px; border-radius: 5px; color: white; text-align: center; font-weight: bold; }
                 .footer { text-align: center; border-top: 2px solid #000; padding-top: 10px; font-size: 12px; color: #666; }
                 .version-info { font-size: 10px; color: #999; text-align: right; margin-top: 5px; }
-                .observacion { margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffd93d; font-style: italic; }
             </style>
         </head>
         <body>
@@ -855,6 +1064,8 @@ function imprimirRegistroIndividual(id) {
                     <h1>⚡ CONTROL T</h1>
                     <h2>Comprobante de Registro</h2>
                 </div>
+                
+                ${registro.po ? `<div class="po-destacado">📦 PO: ${registro.po}</div>` : ''}
                 
                 <div class="barcode-container">
                     <svg id="barcode"></svg>
@@ -866,34 +1077,30 @@ function imprimirRegistroIndividual(id) {
                     <div class="fila"><span class="etiqueta">Fecha:</span> <span class="valor">${formatearFecha(registro.fecha)}</span></div>
                     <div class="fila"><span class="etiqueta">Estilo/Deporte:</span> <span class="valor">${registro.estilo}</span></div>
                     <div class="fila"><span class="etiqueta">Tela:</span> <span class="valor">${registro.tela}</span></div>
-                    <div class="fila"><span class="etiqueta">Color:</span> <span class="valor">${registro.color}</span></div>
                     
-                    <div style="margin: 15px 0;">
-                        <strong>CMYK:</strong>
-                        <div class="cmyk-row">
-                            <div class="cmyk-item" style="background: #60a5fa20; border:1px solid #60a5fa;">C: ${registro.cyan || 0}</div>
-                            <div class="cmyk-item" style="background: #f472b620; border:1px solid #f472b6;">M: ${registro.magenta || 0}</div>
-                            <div class="cmyk-item" style="background: #fbbf2420; border:1px solid #fbbf24;">Y: ${registro.yellow || 0}</div>
-                            <div class="cmyk-item" style="background: #9ca3af20; border:1px solid #9ca3af;">K: ${registro.black || 0}</div>
+                    <div class="fila"><span class="etiqueta">CMYK:</span> 
+                        <span class="valor">
+                            C:${registro.cyan.toFixed(1)} M:${registro.magenta.toFixed(1)} Y:${registro.yellow.toFixed(1)} K:${registro.black.toFixed(1)}
+                        </span>
+                    </div>
+                    
+                    ${(registro.color1_nombre || registro.color2_nombre || registro.color3_nombre || registro.color4_nombre) ? `
+                        <div class="colores-extras">
+                            ${registro.color1_nombre ? `<div class="color-box" style="background: #9c27b0;">${registro.color1_nombre}: ${registro.color1_valor.toFixed(1)}</div>` : ''}
+                            ${registro.color2_nombre ? `<div class="color-box" style="background: #ff9800; color: black;">${registro.color2_nombre}: ${registro.color2_valor.toFixed(1)}</div>` : ''}
+                            ${registro.color3_nombre ? `<div class="color-box" style="background: #4caf50;">${registro.color3_nombre}: ${registro.color3_valor.toFixed(1)}</div>` : ''}
+                            ${registro.color4_nombre ? `<div class="color-box" style="background: #f44336;">${registro.color4_nombre}: ${registro.color4_valor.toFixed(1)}</div>` : ''}
                         </div>
-                    </div>
+                    ` : ''}
                     
-                    <div class="plotter-section">
-                        <strong>🖨️ PLOTTER:</strong><br>
-                        Temperatura: ${registro.plotter_temp ? registro.plotter_temp.toFixed(1) + ' °C' : 'N/A'}<br>
-                        Humedad: ${registro.plotter_humedad ? registro.plotter_humedad.toFixed(0) + '%' : 'N/A'}<br>
-                        Perfil: ${registro.plotter_perfil || 'N/A'}
-                    </div>
-                    
+                    <div class="fila"><span class="etiqueta">Plotter:</span> <span class="valor">${plotterText}</span></div>
                     <div class="fila"><span class="etiqueta">Adhesivo:</span> <span class="valor">${registro.adhesivo}</span></div>
-                    <div class="fila"><span class="etiqueta">Temperatura Monti:</span> <span class="valor">${registro.temperatura_monti.toFixed(1)} °C</span></div>
-                    <div class="fila"><span class="etiqueta">Velocidad Monti:</span> <span class="valor">${registro.velocidad_monti.toFixed(1)} m/min</span></div>
-                    <div class="fila"><span class="etiqueta">Temperatura Flat:</span> <span class="valor">${registro.temperatura_flat.toFixed(1)} °C</span></div>
-                    <div class="fila"><span class="etiqueta">Tiempo Flat:</span> <span class="valor">${registro.tiempo_flat.toFixed(1)} seg</span></div>
+                    <div class="fila"><span class="etiqueta">Monti:</span> <span class="valor">${registro.temperatura_monti.toFixed(1)}°C / ${registro.velocidad_monti.toFixed(1)} m/min</span></div>
+                    <div class="fila"><span class="etiqueta">Flat:</span> <span class="valor">${registro.temperatura_flat.toFixed(1)}°C / ${registro.tiempo_flat.toFixed(1)}s</span></div>
                 </div>
                 
                 ${registro.observacion ? `
-                    <div class="observacion">
+                    <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffd93d;">
                         <strong>📝 Observación:</strong> ${registro.observacion}
                     </div>
                 ` : ''}
@@ -902,9 +1109,7 @@ function imprimirRegistroIndividual(id) {
                     <p>CONTROL T - Sistema de Gestión de Parámetros</p>
                     <div>Impreso: ${new Date().toLocaleString()}</div>
                     <div class="version-info">
-                        Creado: ${new Date(registro.creado).toLocaleString()} | 
-                        Versión: ${registro.version || 1} | 
-                        Última modificación: ${new Date(registro.actualizado).toLocaleString()}
+                        Versión: ${registro.version || 1}
                     </div>
                 </div>
             </div>
@@ -937,9 +1142,10 @@ function abrirModalSeleccionRegistro() {
     if (registros.length === 0) {
         select.innerHTML = '<option value="">No hay registros</option>';
     } else {
-        select.innerHTML = registros.map(reg => `
-            <option value="${reg.id}">Sem ${reg.semana} | ${reg.fecha} | ${reg.estilo} | ${reg.color}</option>
-        `).join('');
+        select.innerHTML = registros.map(reg => {
+            const poText = reg.po ? ` [${reg.po}]` : '';
+            return `<option value="${reg.id}">Sem ${reg.semana} | ${reg.fecha} | ${reg.estilo}${poText}</option>`;
+        }).join('');
     }
     
     modal.classList.add('show');
