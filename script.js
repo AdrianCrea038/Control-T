@@ -1183,7 +1183,7 @@ function imprimirReportesHandler() {
     ventanaImpresion.document.close();
 }
 
-// =// ==================== IMPRESIÓN INDIVIDUAL CON QR CORREGIDA ====================
+// ==================== IMPRESIÓN INDIVIDUAL CON QR CORREGIDA ====================
 function imprimirRegistroIndividual(id) {
     const registro = registros.find(r => r.id === id);
     if (!registro) {
@@ -1191,68 +1191,35 @@ function imprimirRegistroIndividual(id) {
         return;
     }
     
-    // Verificar que la librería QR esté cargada
-    if (typeof QRCode === 'undefined') {
-        mostrarNotificacion('❌ Error: Librería QR no cargada. Intentando de nuevo...', 'error');
-        console.error('QRCode no está definido');
-        
-        // Intentar cargar la librería dinámicamente
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-        script.onload = () => {
-            mostrarNotificacion('✅ Librería QR cargada, intenta nuevamente', 'success');
-        };
-        script.onerror = () => {
-            mostrarNotificacion('❌ No se pudo cargar la librería QR', 'error');
-        };
-        document.head.appendChild(script);
-        return;
-    }
-    
+    // Crear ventana de impresión
     const ventanaImpresion = window.open('', '_blank');
     
-    // DATOS PARA QR - Formato CSV simple y legible
-    const qrText = [
-        `ID:${registro.id}`,
-        `PO:${registro.po || 'S/PO'}`,
-        `VER:${registro.version}`,
-        `PROC:${registro.proceso}`,
-        `FECHA:${registro.fecha}`,
-        `ESTILO:${registro.estilo}`,
-        `TELA:${registro.tela}`,
-        `REEMP:${registro.esReemplazo ? 'SI' : 'NO'}`,
-        // Monti (CORREGIDO: usar monti_numero)
-        `MONTI N°:${registro.monti_numero || 0}`,
-        `T°MONTI:${(registro.temperatura_monti || 0).toFixed(1)}°C`,
-        `VEL:${(registro.velocidad_monti || 0).toFixed(1)}`,
-        `PRES:${(registro.monti_presion || 0).toFixed(1)}`,
-        // Plotter
-        `PLOTTER N°:${registro.numero_plotter || 0}`,
-        `T°AMB:${(registro.plotter_temp || 0).toFixed(1)}°C`,
-        `HUM:${(registro.plotter_humedad || 0).toFixed(0)}%`,
-        `PERFIL:${registro.plotter_perfil || '-'}`,
-        // Flat
-        `T°FLAT:${(registro.temperatura_flat || 0).toFixed(1)}°C`,
-        `TIEMPO:${(registro.tiempo_flat || 0).toFixed(1)}s`,
-        `ADH:${registro.adhesivo || '-'}`
-    ].join('|');
+    // DATOS PARA QR - VERSIÓN REDUCIDA (para evitar overflow)
+    // Crear un objeto con SOLO la información esencial
+    const datosEsenciales = {
+        id: registro.id.substring(0, 8), // ID truncado
+        po: registro.po || '',
+        v: registro.version || 1,
+        proc: registro.proceso || '',
+        fecha: registro.fecha,
+        estilo: registro.estilo || '',
+        tela: registro.tela || '',
+        monti: registro.monti_numero || 0,
+        tm: (registro.temperatura_monti || 0).toFixed(0),
+        flat: (registro.temperatura_flat || 0).toFixed(0)
+    };
     
-    // Colores (si existen)
-    let coloresQR = '';
-    if (registro.colores && registro.colores.length > 0) {
-        coloresQR = '|' + registro.colores.map((c, idx) => {
-            return `C${idx+1}:${c.nombre}|C:${c.cyan}|M:${c.magenta}|Y:${c.yellow}|K:${c.black}|T:${c.turquesa}|N:${c.naranja}|FY:${c.fluorYellow}|FP:${c.fluorPink}`;
-        }).join('|');
-    }
+    // Convertir a JSON string (más eficiente que texto plano)
+    const qrData = JSON.stringify(datosEsenciales);
     
-    const qrDataFinal = qrText + coloresQR;
+    // Verificar longitud (máximo 1000 caracteres para QR versiones estándar)
+    console.log('Longitud QR:', qrData.length);
     
     const htmlContenido = `
         <!DOCTYPE html>
         <html>
         <head>
-            <title>ALPHA DB - Etiqueta Textil</title>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+            <title>ALPHA DB - Etiqueta</title>
             <style>
                 body { 
                     margin: 0; 
@@ -1266,149 +1233,75 @@ function imprimirRegistroIndividual(id) {
                     border-radius: 15px;
                     max-width: 8.5in;
                     margin: 0 auto;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
                 }
                 .header { 
                     display: flex; 
                     justify-content: space-between; 
-                    align-items: center;
                     border-bottom: 3px solid #000; 
                     padding-bottom: 15px;
                     margin-bottom: 20px;
                 }
-                .header h1 { 
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 800;
-                    color: #000;
-                }
-                .po-version { text-align: right; }
-                .po-destacado { 
-                    font-size: 32px; 
-                    font-weight: 900; 
-                    color: #000;
-                }
-                .version-destacado { 
-                    font-size: 24px; 
-                    font-weight: 900; 
-                    color: #ff0000;
-                }
-                .info-principal {
+                .header h1 { margin:0; font-size:28px; font-weight:800; }
+                .po-destacado { font-size:32px; font-weight:900; }
+                .version-destacado { font-size:24px; font-weight:900; color:#ff0000; }
+                .info-grid {
                     display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 10px;
-                    margin: 20px 0;
-                    padding: 15px;
-                    background: #f5f5f5;
-                    border-radius: 10px;
+                    grid-template-columns: repeat(2,1fr);
+                    gap:10px;
+                    background:#f5f5f5;
+                    padding:15px;
+                    border-radius:10px;
+                    margin:20px 0;
                 }
                 .seccion-titulo {
-                    font-size: 18px;
-                    font-weight: 800;
-                    margin: 20px 0 10px;
-                    padding-bottom: 5px;
-                    border-bottom: 2px solid #000;
-                    color: #000;
+                    font-size:18px;
+                    font-weight:800;
+                    margin:20px 0 10px;
+                    border-bottom:2px solid #000;
                 }
-                .colores-lista {
-                    margin: 15px 0;
-                }
-                .color-item {
-                    background: #f0f0f0;
-                    padding: 12px;
-                    margin-bottom: 10px;
-                    border-radius: 8px;
-                    border-left: 4px solid #ff6b6b;
-                }
-                .color-nombre {
-                    font-size: 16px;
-                    font-weight: 700;
-                    margin-bottom: 8px;
-                    color: #000;
-                }
-                .color-valores {
+                .param-grid {
                     display: grid;
-                    grid-template-columns: repeat(4, 1fr);
-                    gap: 5px;
-                    font-size: 12px;
-                }
-                .parametros-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 15px;
-                    margin: 15px 0;
+                    grid-template-columns: repeat(3,1fr);
+                    gap:15px;
+                    margin:15px 0;
                 }
                 .param-box {
-                    background: #f0f0f0;
-                    padding: 12px;
-                    border-radius: 8px;
-                    border-left: 4px solid #000;
+                    background:#f0f0f0;
+                    padding:12px;
+                    border-radius:8px;
+                    border-left:4px solid #000;
                 }
-                .param-box strong {
-                    display: block;
-                    margin-bottom: 8px;
-                    font-size: 14px;
-                }
-                .qr-section {
+                .qr-container {
                     display: flex;
-                    justify-content: center;
+                    flex-direction: column;
+                    align-items: center;
                     margin: 20px 0;
                     padding: 20px;
                     background: #f9f9f9;
                     border-radius: 10px;
                 }
                 #qrcode { 
-                    padding: 15px; 
                     background: white; 
+                    padding: 15px; 
                     border: 2px solid #000; 
                     border-radius: 10px;
-                    display: inline-block;
                 }
-                #qrcode canvas, #qrcode img {
-                    display: block;
-                    margin: 0 auto;
-                }
-                .qr-note { 
-                    font-size: 10px; 
-                    color: #666; 
-                    text-align: center; 
-                    margin-top: 10px;
-                }
-                .footer { 
-                    text-align: center; 
-                    border-top: 2px solid #000; 
-                    padding-top: 15px; 
-                    margin-top: 20px; 
-                    font-size: 12px; 
-                    color: #666; 
-                }
-                .observacion {
-                    margin-top: 15px;
-                    padding: 10px;
-                    background: #fff3cd;
-                    border-left: 4px solid #ffd93d;
-                    font-style: italic;
-                }
-                .error-message {
-                    color: red;
-                    text-align: center;
-                    padding: 20px;
-                }
+                #qrcode canvas { display: block; margin: 0 auto; }
+                .qr-note { font-size: 10px; color: #666; margin-top: 10px; }
+                .footer { text-align: center; border-top: 2px solid #000; padding-top: 15px; margin-top: 20px; }
             </style>
         </head>
         <body>
             <div class="etiqueta">
-                <!-- HEADER con PO y VERSIÓN -->
                 <div class="header">
                     <h1>⚡ ALPHA DB</h1>
-                    <div class="po-version">
+                    <div>
                         <div class="po-destacado">${registro.po || 'S/PO'}</div>
                         <div class="version-destacado">v${registro.version || 1}</div>
                     </div>
                 </div>
                 
-                <!-- Información Principal -->
-                <div class="info-principal">
+                <div class="info-grid">
                     <div><strong>Fecha:</strong> ${formatearFecha(registro.fecha)}</div>
                     <div><strong>Semana:</strong> ${registro.semana}</div>
                     <div><strong>Estilo:</strong> ${registro.estilo}</div>
@@ -1417,109 +1310,72 @@ function imprimirRegistroIndividual(id) {
                     <div><strong>Reemplazo:</strong> ${registro.esReemplazo ? 'SÍ' : 'NO'}</div>
                 </div>
                 
-                <!-- COLORES -->
-                <div class="seccion-titulo">🎨 ESPECIFICACIÓN DE COLORES</div>
-                <div class="colores-lista">
-                    ${registro.colores && registro.colores.length > 0 ? 
-                        registro.colores.map(c => `
-                            <div class="color-item">
-                                <div class="color-nombre">${c.nombre}</div>
-                                <div class="color-valores">
-                                    <div>C: ${c.cyan}%</div>
-                                    <div>M: ${c.magenta}%</div>
-                                    <div>Y: ${c.yellow}%</div>
-                                    <div>K: ${c.black}%</div>
-                                    <div>T: ${c.turquesa}%</div>
-                                    <div>N: ${c.naranja}%</div>
-                                    <div>FY: ${c.fluorYellow}%</div>
-                                    <div>FP: ${c.fluorPink}%</div>
-                                </div>
-                            </div>
-                        `).join('') 
-                        : '<div class="color-item">Sin colores especificados</div>'
-                    }
-                </div>
-                
-                <!-- PARÁMETROS DE PRODUCCIÓN -->
                 <div class="seccion-titulo">⚙️ PARÁMETROS</div>
-                <div class="parametros-grid">
-                    <!-- PLOTTER -->
+                <div class="param-grid">
                     <div class="param-box">
-                        <strong>🖨️ PLOTTER</strong>
+                        <strong>🖨️ PLOTTER</strong><br>
                         N° ${registro.numero_plotter || 0}<br>
                         Temp: ${(registro.plotter_temp || 0).toFixed(1)}°C<br>
-                        Hum: ${(registro.plotter_humedad || 0).toFixed(0)}%<br>
-                        Perfil: ${registro.plotter_perfil || '-'}
+                        Hum: ${(registro.plotter_humedad || 0).toFixed(0)}%
                     </div>
-                    
-                    <!-- MONTI - CORREGIDO: ahora muestra monti_numero -->
                     <div class="param-box">
-                        <strong>🔥 MONTI</strong>
+                        <strong>🔥 MONTI</strong><br>
                         N° ${registro.monti_numero || 0}<br>
                         Temp: ${(registro.temperatura_monti || 0).toFixed(1)}°C<br>
-                        Vel: ${(registro.velocidad_monti || 0).toFixed(1)} m/min<br>
-                        Presión: ${(registro.monti_presion || 0).toFixed(1)} bar
+                        Vel: ${(registro.velocidad_monti || 0).toFixed(1)} m/min
                     </div>
-                    
-                    <!-- FLAT -->
                     <div class="param-box">
-                        <strong>📏 FLAT</strong>
+                        <strong>📏 FLAT</strong><br>
                         Temp: ${(registro.temperatura_flat || 0).toFixed(1)}°C<br>
-                        Tiempo: ${(registro.tiempo_flat || 0).toFixed(1)} s<br>
-                        Adhesivo: ${registro.adhesivo || '-'}
+                        Tiempo: ${(registro.tiempo_flat || 0).toFixed(1)} s
                     </div>
                 </div>
                 
-                <!-- CÓDIGO QR -->
-                <div class="qr-section">
+                <div class="qr-container">
                     <div id="qrcode"></div>
+                    <div class="qr-note">Escanea para ver información</div>
                 </div>
-                <div class="qr-note">Escanea para obtener información del registro</div>
                 
-                <!-- Observación (si existe) -->
-                ${registro.observacion ? `
-                    <div class="observacion">
-                        <strong>📝 Observación:</strong> ${registro.observacion}
-                    </div>
-                ` : ''}
+                ${registro.observacion ? `<div style="margin-top:15px; padding:10px; background:#fff3cd; border-left:4px solid #ffd93d;">📝 ${registro.observacion}</div>` : ''}
                 
-                <!-- FOOTER -->
                 <div class="footer">
-                    <p><strong>ALPHA DB</strong> - Alpha Data Base | Trazabilidad Textil</p>
-                    <div>ID: ${registro.id} | Impreso: ${new Date().toLocaleString()}</div>
+                    <strong>ALPHA DB</strong> | ID: ${registro.id} | ${new Date().toLocaleString()}
                 </div>
             </div>
             
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
             <script>
                 (function() {
                     try {
-                        // Verificar que QRCode existe
-                        if (typeof QRCode === 'undefined') {
-                            throw new Error('QRCode no está definido');
-                        }
+                        // Datos reducidos para el QR
+                        var qrData = ${JSON.stringify(qrData)};
+                        console.log('Generando QR con datos:', qrData);
                         
-                        // Crear el código QR
-                        var qr = new QRCode(document.getElementById("qrcode"), {
-                            text: ${JSON.stringify(qrDataFinal)},
-                            width: 200,
-                            height: 200,
-                            colorDark: "#000000",
-                            colorLight: "#ffffff",
-                            correctLevel: QRCode.CorrectLevel.H
-                        });
-                        
-                        console.log('QR generado correctamente');
-                    } catch (e) {
-                        console.error('Error generando QR:', e);
-                        document.getElementById("qrcode").innerHTML = '<div style="color:red; padding:20px; text-align:center;">Error al generar QR</div>';
-                    }
-                    
-                    // Imprimir después de un breve retraso
-                    window.onload = function() {
+                        // Esperar a que el DOM esté listo
                         setTimeout(function() {
-                            window.print();
-                        }, 1500);
-                    };
+                            var qrElement = document.getElementById('qrcode');
+                            if (qrElement) {
+                                var qr = new QRCode(qrElement, {
+                                    text: qrData,
+                                    width: 180,
+                                    height: 180,
+                                    colorDark: "#000000",
+                                    colorLight: "#ffffff",
+                                    correctLevel: QRCode.CorrectLevel.M
+                                });
+                                console.log('QR generado correctamente');
+                                
+                                // Imprimir después de generar QR
+                                setTimeout(function() {
+                                    window.print();
+                                }, 500);
+                            }
+                        }, 100);
+                    } catch (e) {
+                        console.error('Error QR:', e);
+                        document.getElementById('qrcode').innerHTML = '<div style="color:red; padding:20px;">Error QR</div>';
+                        setTimeout(function() { window.print(); }, 500);
+                    }
                 })();
             <\/script>
         </body>
