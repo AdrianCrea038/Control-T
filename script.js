@@ -1183,7 +1183,7 @@ function imprimirReportesHandler() {
     ventanaImpresion.document.close();
 }
 
-// ==================== IMPRESIÓN INDIVIDUAL CON QR CORREGIDA ====================
+// ==================== IMPRESIÓN INDIVIDUAL CORREGIDA ====================
 function imprimirRegistroIndividual(id) {
     const registro = registros.find(r => r.id === id);
     if (!registro) {
@@ -1191,104 +1191,30 @@ function imprimirRegistroIndividual(id) {
         return;
     }
     
-    // Crear ventana de impresión
     const ventanaImpresion = window.open('', '_blank');
     
-    // DATOS PARA QR - VERSIÓN REDUCIDA (para evitar overflow)
-    // Crear un objeto con SOLO la información esencial
-    const datosEsenciales = {
-        id: registro.id.substring(0, 8), // ID truncado
-        po: registro.po || '',
-        v: registro.version || 1,
-        proc: registro.proceso || '',
-        fecha: registro.fecha,
-        estilo: registro.estilo || '',
-        tela: registro.tela || '',
-        monti: registro.monti_numero || 0,
-        tm: (registro.temperatura_monti || 0).toFixed(0),
-        flat: (registro.temperatura_flat || 0).toFixed(0)
-    };
-    
-    // Convertir a JSON string (más eficiente que texto plano)
-    const qrData = JSON.stringify(datosEsenciales);
-    
-    // Verificar longitud (máximo 1000 caracteres para QR versiones estándar)
-    console.log('Longitud QR:', qrData.length);
+    // QR con SOLO 100 caracteres (bien dentro del límite)
+    const qrData = `PO:${registro.po || 'S/PO'}|V:${registro.version}|F:${registro.fecha}`;
     
     const htmlContenido = `
         <!DOCTYPE html>
         <html>
         <head>
             <title>ALPHA DB - Etiqueta</title>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
             <style>
-                body { 
-                    margin: 0; 
-                    padding: 0.25in; 
-                    font-family: 'Arial', sans-serif; 
-                    background: white; 
-                }
-                .etiqueta { 
-                    border: 3px solid #000; 
-                    padding: 20px; 
-                    border-radius: 15px;
-                    max-width: 8.5in;
-                    margin: 0 auto;
-                }
-                .header { 
-                    display: flex; 
-                    justify-content: space-between; 
-                    border-bottom: 3px solid #000; 
-                    padding-bottom: 15px;
-                    margin-bottom: 20px;
-                }
-                .header h1 { margin:0; font-size:28px; font-weight:800; }
+                body { margin:0; padding:0.25in; font-family:Arial; background:white; }
+                .etiqueta { border:3px solid #000; padding:20px; max-width:8.5in; margin:0 auto; }
+                .header { display:flex; justify-content:space-between; border-bottom:3px solid #000; padding-bottom:15px; margin-bottom:20px; }
                 .po-destacado { font-size:32px; font-weight:900; }
                 .version-destacado { font-size:24px; font-weight:900; color:#ff0000; }
-                .info-grid {
-                    display: grid;
-                    grid-template-columns: repeat(2,1fr);
-                    gap:10px;
-                    background:#f5f5f5;
-                    padding:15px;
-                    border-radius:10px;
-                    margin:20px 0;
-                }
-                .seccion-titulo {
-                    font-size:18px;
-                    font-weight:800;
-                    margin:20px 0 10px;
-                    border-bottom:2px solid #000;
-                }
-                .param-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3,1fr);
-                    gap:15px;
-                    margin:15px 0;
-                }
-                .param-box {
-                    background:#f0f0f0;
-                    padding:12px;
-                    border-radius:8px;
-                    border-left:4px solid #000;
-                }
-                .qr-container {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    margin: 20px 0;
-                    padding: 20px;
-                    background: #f9f9f9;
-                    border-radius: 10px;
-                }
-                #qrcode { 
-                    background: white; 
-                    padding: 15px; 
-                    border: 2px solid #000; 
-                    border-radius: 10px;
-                }
-                #qrcode canvas { display: block; margin: 0 auto; }
-                .qr-note { font-size: 10px; color: #666; margin-top: 10px; }
-                .footer { text-align: center; border-top: 2px solid #000; padding-top: 15px; margin-top: 20px; }
+                .info-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; background:#f5f5f5; padding:15px; border-radius:10px; margin:20px 0; }
+                .param-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; margin:20px 0; }
+                .param-box { background:#f0f0f0; padding:12px; border-radius:8px; border-left:4px solid #000; }
+                .qr-container { text-align:center; margin:20px 0; padding:20px; background:#f9f9f9; }
+                #qrcode { display:inline-block; background:white; padding:10px; border:2px solid #000; border-radius:10px; }
+                .footer { text-align:center; border-top:2px solid #000; padding-top:15px; margin-top:20px; }
+                .error { color:red; text-align:center; padding:20px; }
             </style>
         </head>
         <body>
@@ -1310,17 +1236,17 @@ function imprimirRegistroIndividual(id) {
                     <div><strong>Reemplazo:</strong> ${registro.esReemplazo ? 'SÍ' : 'NO'}</div>
                 </div>
                 
-                <div class="seccion-titulo">⚙️ PARÁMETROS</div>
                 <div class="param-grid">
                     <div class="param-box">
                         <strong>🖨️ PLOTTER</strong><br>
                         N° ${registro.numero_plotter || 0}<br>
-                        Temp: ${(registro.plotter_temp || 0).toFixed(1)}°C<br>
-                        Hum: ${(registro.plotter_humedad || 0).toFixed(0)}%
+                        Temp: ${(registro.plotter_temp || 0).toFixed(1)}°C
                     </div>
                     <div class="param-box">
                         <strong>🔥 MONTI</strong><br>
-                        N° ${registro.monti_numero || 0}<br>
+                        <span style="font-size:18px; font-weight:bold; color:#ff0000;">
+                            N° ${registro.monti_numero || 0}
+                        </span><br>
                         Temp: ${(registro.temperatura_monti || 0).toFixed(1)}°C<br>
                         Vel: ${(registro.velocidad_monti || 0).toFixed(1)} m/min
                     </div>
@@ -1333,50 +1259,26 @@ function imprimirRegistroIndividual(id) {
                 
                 <div class="qr-container">
                     <div id="qrcode"></div>
-                    <div class="qr-note">Escanea para ver información</div>
+                    <p style="font-size:10px; margin-top:10px;">Escanea para ver PO: ${registro.po}</p>
                 </div>
                 
-                ${registro.observacion ? `<div style="margin-top:15px; padding:10px; background:#fff3cd; border-left:4px solid #ffd93d;">📝 ${registro.observacion}</div>` : ''}
-                
                 <div class="footer">
-                    <strong>ALPHA DB</strong> | ID: ${registro.id} | ${new Date().toLocaleString()}
+                    <strong>ALPHA DB</strong> | ID: ${registro.id}
                 </div>
             </div>
             
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
             <script>
-                (function() {
-                    try {
-                        // Datos reducidos para el QR
-                        var qrData = ${JSON.stringify(qrData)};
-                        console.log('Generando QR con datos:', qrData);
-                        
-                        // Esperar a que el DOM esté listo
-                        setTimeout(function() {
-                            var qrElement = document.getElementById('qrcode');
-                            if (qrElement) {
-                                var qr = new QRCode(qrElement, {
-                                    text: qrData,
-                                    width: 180,
-                                    height: 180,
-                                    colorDark: "#000000",
-                                    colorLight: "#ffffff",
-                                    correctLevel: QRCode.CorrectLevel.M
-                                });
-                                console.log('QR generado correctamente');
-                                
-                                // Imprimir después de generar QR
-                                setTimeout(function() {
-                                    window.print();
-                                }, 500);
-                            }
-                        }, 100);
-                    } catch (e) {
-                        console.error('Error QR:', e);
-                        document.getElementById('qrcode').innerHTML = '<div style="color:red; padding:20px;">Error QR</div>';
-                        setTimeout(function() { window.print(); }, 500);
-                    }
-                })();
+                try {
+                    new QRCode(document.getElementById("qrcode"), {
+                        text: ${JSON.stringify(qrData)},
+                        width: 150,
+                        height: 150
+                    });
+                    setTimeout(() => window.print(), 500);
+                } catch(e) {
+                    document.getElementById("qrcode").innerHTML = '<div class="error">Error QR</div>';
+                    setTimeout(() => window.print(), 500);
+                }
             <\/script>
         </body>
         </html>
