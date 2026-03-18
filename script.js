@@ -1,9 +1,9 @@
 // ALPHA DB - Sistema de Gestión Premium
-// Versión 8.5 - CORREGIDO (Monti visible + QR funcional)
+// Versión 8.6 - CORREGIDO (Fecha reformulación + todos los datos)
 
 // ==================== CONFIGURACIÓN ====================
 const SISTEMA_NOMBRE = 'ALPHA DB';
-const DB_VERSION = '8.5';
+const DB_VERSION = '8.6';
 const DB_EXTENSION = '.adb';
 
 // Estado de la aplicación
@@ -586,7 +586,6 @@ function exportarAExcel() {
 }
 
 // ==================== MANEJO DE REGISTROS ====================
-// CORRECCIÓN #1: Agregado monti_numero al guardar
 function guardarRegistro(e) {
     e.preventDefault();
     
@@ -621,7 +620,6 @@ function guardarRegistro(e) {
     
     const colores = obtenerColoresDeFormulario();
     
-    // ⚠️ CORRECCIÓN: Agregado monti_numero explícitamente
     const registroData = {
         id: editId || generarIdUnico(),
         po: po.toUpperCase(),
@@ -639,7 +637,6 @@ function guardarRegistro(e) {
         plotter_humedad: parseFloat(document.getElementById('plotter_humedad')?.value) || 0,
         plotter_perfil: document.getElementById('plotter_perfil')?.value.toUpperCase() || '',
         
-        // ✅ CAMBIO IMPORTANTE: Guardar monti_numero
         monti_numero: parseInt(document.getElementById('monti_numero')?.value) || 0,
         
         temperatura_monti: parseFloat(document.getElementById('temp_monti')?.value) || 0,
@@ -745,7 +742,6 @@ function editarRegistro(id) {
     setValueIfExists('plotter_humedad', registro.plotter_humedad);
     setValueIfExists('plotter_perfil', registro.plotter_perfil);
     
-    // ✅ Cargar monti_numero al editar
     setValueIfExists('monti_numero', registro.monti_numero);
     
     setValueIfExists('temp_monti', registro.temperatura_monti);
@@ -774,67 +770,6 @@ function editarRegistro(id) {
         formSection.classList.add('edit-mode');
         formSection.scrollIntoView({ behavior: 'smooth' });
     }
-}
-
-function verHistorial(id) {
-    const registro = registros.find(r => r.id === id);
-    if (!registro) return;
-    
-    const historial = historialEdiciones[id] || [];
-    const modal = document.getElementById('modalHistorial');
-    const container = document.getElementById('historialContainer');
-    
-    if (!modal || !container) return;
-    
-    let html = '';
-    
-    if (historial.length === 0) {
-        html = '<p class="no-data">No hay historial de ediciones</p>';
-    } else {
-        html = historial.map((entry, index) => {
-            return `
-                <div class="historial-item">
-                    <div class="historial-fecha">
-                        <span>📅 ${new Date(entry.fecha).toLocaleString()}</span>
-                        <span class="historial-version">v${index + 2}</span>
-                        ${entry.descripcion ? `<span class="historial-descripcion">📝 ${entry.descripcion}</span>` : ''}
-                    </div>
-                    <div style="margin-top:0.5rem; display: flex; gap: 1rem;">
-                        <div style="flex:1; border-left: 2px solid #ff6b6b; padding-left: 0.5rem;">
-                            <div style="font-size:0.7rem; color:#ff6b6b;">ANTERIOR</div>
-                            <div>PO: ${entry.anterior.po || '-'}</div>
-                            <div>Proceso: ${entry.anterior.proceso || '-'}</div>
-                            <div>Versión: v${entry.anterior.version || 1}</div>
-                        </div>
-                        <div style="flex:1; border-left: 2px solid #4caf50; padding-left: 0.5rem;">
-                            <div style="font-size:0.7rem; color:#4caf50;">NUEVO</div>
-                            <div>PO: ${entry.nuevo.po || '-'}</div>
-                            <div>Proceso: ${entry.nuevo.proceso || '-'}</div>
-                            <div>Versión: v${entry.nuevo.version || 2}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-    
-    html += `
-        <div class="historial-item" style="border-color: #ffd93d;">
-            <div class="historial-fecha">
-                <span style="color: #ffd93d;">⚡ VERSIÓN ACTUAL ${registro.version}</span>
-                <span>${new Date(registro.actualizado).toLocaleString()}</span>
-                ${registro.descripcion_edicion ? `<span>📝 ${registro.descripcion_edicion}</span>` : ''}
-            </div>
-            <div style="margin-top:0.5rem;">
-                <div>PO: ${registro.po || '-'} | Proceso: ${registro.proceso || '-'}</div>
-                <div>Colores: ${registro.colores ? registro.colores.length : 0}</div>
-            </div>
-            ${registro.observacion ? `<div style="margin-top:0.5rem; color:#ffd93d;">📝 ${registro.observacion}</div>` : ''}
-        </div>
-    `;
-    
-    container.innerHTML = html;
-    modal.classList.add('show');
 }
 
 function cancelarEdicion() {
@@ -1153,8 +1088,8 @@ function imprimirReportesHandler() {
     ventanaImpresion.document.close();
 }
 
-// ==================== IMPRESIÓN INDIVIDUAL CON QR CORREGIDO ====================
-// CORRECCIÓN #2: Monti visible y QR reducido
+// ==================== IMPRESIÓN INDIVIDUAL CON TODOS LOS DATOS ====================
+// CAMBIO PRINCIPAL: Fecha de reformulación + todos los datos de colores
 function imprimirRegistroIndividual(id) {
     const registro = registros.find(r => r.id === id);
     if (!registro) {
@@ -1164,8 +1099,30 @@ function imprimirRegistroIndividual(id) {
     
     const ventanaImpresion = window.open('', '_blank');
     
-    // ✅ QR con SOLO 100 caracteres (evita overflow)
+    // QR con datos mínimos (para evitar overflow)
     const qrData = `PO:${registro.po || 'S/PO'}|V:${registro.version}|F:${registro.fecha}`;
+    
+    // Generar HTML de colores dinámicos
+    let coloresHtml = '';
+    if (registro.colores && registro.colores.length > 0) {
+        coloresHtml = registro.colores.map(c => `
+            <div class="color-item">
+                <div class="color-nombre">${c.nombre}</div>
+                <div class="color-valores">
+                    <div>C: ${c.cyan}%</div>
+                    <div>M: ${c.magenta}%</div>
+                    <div>Y: ${c.yellow}%</div>
+                    <div>K: ${c.black}%</div>
+                    <div>T: ${c.turquesa}%</div>
+                    <div>N: ${c.naranja}%</div>
+                    <div>FY: ${c.fluorYellow}%</div>
+                    <div>FP: ${c.fluorPink}%</div>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        coloresHtml = '<div class="color-item">Sin colores especificados</div>';
+    }
     
     const htmlContenido = `
         <!DOCTYPE html>
@@ -1177,24 +1134,22 @@ function imprimirRegistroIndividual(id) {
                 body { margin:0; padding:0.25in; font-family:Arial; background:white; }
                 .etiqueta { border:3px solid #000; padding:20px; max-width:8.5in; margin:0 auto; }
                 .header { display:flex; justify-content:space-between; border-bottom:3px solid #000; padding-bottom:15px; margin-bottom:20px; }
+                .header h1 { margin:0; font-size:28px; font-weight:800; }
                 .po-destacado { font-size:32px; font-weight:900; }
                 .version-destacado { font-size:24px; font-weight:900; color:#ff0000; }
                 .info-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; background:#f5f5f5; padding:15px; border-radius:10px; margin:20px 0; }
+                .seccion-titulo { font-size:18px; font-weight:800; margin:20px 0 10px; border-bottom:2px solid #000; }
+                .colores-lista { margin:15px 0; }
+                .color-item { background:#f0f0f0; padding:12px; margin-bottom:10px; border-radius:8px; border-left:4px solid #ff6b6b; }
+                .color-nombre { font-size:16px; font-weight:700; margin-bottom:8px; }
+                .color-valores { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; font-size:12px; }
                 .param-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; margin:20px 0; }
                 .param-box { background:#f0f0f0; padding:15px; border-radius:8px; border-left:4px solid #000; }
-                .monti-numero { 
-                    font-size: 24px; 
-                    font-weight: 900; 
-                    color: #ff0000;
-                    background: #ffe6e6;
-                    padding: 5px 10px;
-                    border-radius: 10px;
-                    display: inline-block;
-                    margin: 5px 0;
-                }
-                .qr-container { text-align:center; margin:20px 0; padding:20px; background:#f9f9f9; }
+                .param-box strong { display:block; margin-bottom:8px; font-size:14px; }
+                .qr-container { text-align:center; margin:20px 0; padding:20px; background:#f9f9f9; border-radius:10px; }
                 #qrcode { display:inline-block; background:white; padding:10px; border:2px solid #000; border-radius:10px; }
                 .footer { text-align:center; border-top:2px solid #000; padding-top:15px; margin-top:20px; }
+                .observacion { margin-top:15px; padding:10px; background:#fff3cd; border-left:4px solid #ffd93d; }
             </style>
         </head>
         <body>
@@ -1207,8 +1162,9 @@ function imprimirRegistroIndividual(id) {
                     </div>
                 </div>
                 
+                <!-- CAMBIO: Ahora dice "FECHA DE REFORMULACIÓN" -->
                 <div class="info-grid">
-                    <div><strong>Fecha:</strong> ${formatearFecha(registro.fecha)}</div>
+                    <div><strong>FECHA DE REFORMULACIÓN:</strong> ${formatearFecha(registro.fecha)}</div>
                     <div><strong>Semana:</strong> ${registro.semana}</div>
                     <div><strong>Estilo:</strong> ${registro.estilo}</div>
                     <div><strong>Tela:</strong> ${registro.tela}</div>
@@ -1216,27 +1172,33 @@ function imprimirRegistroIndividual(id) {
                     <div><strong>Reemplazo:</strong> ${registro.esReemplazo ? 'SÍ' : 'NO'}</div>
                 </div>
                 
+                <!-- TODOS LOS COLORES (restaurados) -->
+                <div class="seccion-titulo">🎨 ESPECIFICACIÓN DE COLORES</div>
+                <div class="colores-lista">
+                    ${coloresHtml}
+                </div>
+                
+                <!-- PARÁMETROS (Monti con mismo estilo que Plotter y Flat) -->
+                <div class="seccion-titulo">⚙️ PARÁMETROS DE PRODUCCIÓN</div>
                 <div class="param-grid">
                     <div class="param-box">
-                        <strong>🖨️ PLOTTER</strong><br>
+                        <strong>🖨️ PLOTTER</strong>
                         N° ${registro.numero_plotter || 0}<br>
                         Temp: ${(registro.plotter_temp || 0).toFixed(1)}°C<br>
-                        Hum: ${(registro.plotter_humedad || 0).toFixed(0)}%
+                        Hum: ${(registro.plotter_humedad || 0).toFixed(0)}%<br>
+                        Perfil: ${registro.plotter_perfil || '-'}
                     </div>
                     
                     <div class="param-box">
-                        <strong>🔥 MONTI</strong><br>
-                        <!-- ✅ NÚMERO DE MONTI EN GRANDE Y ROJO -->
-                        <span class="monti-numero">
-                            N° ${registro.monti_numero || 0}
-                        </span><br>
+                        <strong>🔥 MONTI</strong>
+                        N° ${registro.monti_numero || 0}<br>
                         Temp: ${(registro.temperatura_monti || 0).toFixed(1)}°C<br>
                         Vel: ${(registro.velocidad_monti || 0).toFixed(1)} m/min<br>
                         Presión: ${(registro.monti_presion || 0).toFixed(1)} bar
                     </div>
                     
                     <div class="param-box">
-                        <strong>📏 FLAT</strong><br>
+                        <strong>📏 FLAT</strong>
                         Temp: ${(registro.temperatura_flat || 0).toFixed(1)}°C<br>
                         Tiempo: ${(registro.tiempo_flat || 0).toFixed(1)} s<br>
                         Adhesivo: ${registro.adhesivo || '-'}
@@ -1248,7 +1210,7 @@ function imprimirRegistroIndividual(id) {
                     <p style="font-size:10px; margin-top:10px;">ID: ${registro.id}</p>
                 </div>
                 
-                ${registro.observacion ? `<div style="margin-top:15px; padding:10px; background:#fff3cd; border-left:4px solid #ffd93d;">📝 ${registro.observacion}</div>` : ''}
+                ${registro.observacion ? `<div class="observacion">📝 ${registro.observacion}</div>` : ''}
                 
                 <div class="footer">
                     <strong>ALPHA DB</strong> | Impreso: ${new Date().toLocaleString()}
