@@ -1,3 +1,4 @@
+/* ========== RESET Y ESTILOS BASE ========== */
 * {
     margin: 0;
     padding: 0;
@@ -23,7 +24,7 @@ body {
     background: transparent;
 }
 
-/* ========== HEADER BONITO ========== */
+/* ========== HEADER ========== */
 .header {
     background: linear-gradient(135deg, #1a1a1a, #222222);
     border-radius: 1.5rem;
@@ -67,7 +68,7 @@ body {
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    color: transparent; /* Fallback para Edge */
+    color: transparent;
     letter-spacing: 2px;
     text-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
 }
@@ -239,7 +240,7 @@ body {
     color: #888;
     font-style: italic;
     font-size: 0.8rem;
-    opacity: 1; /* Para Edge */
+    opacity: 1;
 }
 
 /* Inputs específicos focus */
@@ -269,8 +270,8 @@ body {
     font-size: 0.85rem;
     cursor: pointer;
     appearance: none;
-    -webkit-appearance: none; /* Para Chrome */
-    -moz-appearance: none; /* Para Firefox */
+    -webkit-appearance: none;
+    -moz-appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ff6b6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.8rem center;
@@ -289,51 +290,58 @@ body {
     padding: 0.5rem;
 }
 
-/* ========== CHECKBOX ========== */
-.checkbox-bonito {
-    padding: 0.2rem 0;
+/* ========== CHECKBOX DE REEMPLAZO (TU CÓDIGO ORIGINAL) ========== */
+.checkbox-row {
+    margin: 0.5rem 0;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
 }
 
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.5rem;
     cursor: pointer;
+    font-size: 1rem;
+    color: #e0e0e0;
+    padding: 0.5rem 1rem;
+    background: #2a2a2a;
+    border-radius: 2rem;
+    border: 1px solid #ff6b6b;
 }
 
 .checkbox-label input[type="checkbox"] {
-    display: none;
-}
-
-.checkbox-custom {
     width: 1.2rem;
     height: 1.2rem;
+    cursor: pointer;
+    accent-color: #ff6b6b;
+}
+
+/* ========== SELECTOR DE PROCESO (TU CÓDIGO ORIGINAL) ========== */
+.select-proceso {
+    width: 100%;
+    padding: 1rem;
     background: #2a2a2a;
-    border: 2px solid #ff6b6b;
-    border-radius: 0.4rem;
-    position: relative;
-    transition: all 0.2s;
+    border: 1px solid #ff6b6b;
+    border-radius: 1rem;
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
 }
 
-.checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
-    background: #ff6b6b;
+.select-proceso option {
+    background: #2a2a2a;
+    color: #fff;
+    padding: 0.5rem;
+}
+
+.select-proceso:focus {
+    outline: none;
     border-color: #ffd93d;
-}
-
-.checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
-    content: '✓';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 0.8rem;
-    font-weight: bold;
-}
-
-.checkbox-text {
-    color: #ffd93d;
-    font-size: 0.8rem;
+    box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.1);
 }
 
 /* ========== TÍTULOS DE SECCIÓN ========== */
@@ -419,6 +427,29 @@ body {
     grid-column: 1 / -1;
 }
 
+/* ========== ESTILOS PARA PO Y VERSIÓN (TU CÓDIGO ORIGINAL) ========== */
+.po-badge {
+    background: #000;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: bold;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.version-badge {
+    background: #ffd93d;
+    color: black;
+    padding: 0.2rem 0.5rem;
+    border-radius: 1rem;
+    font-weight: bold;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    display: inline-block;
+}
+
 /* ========== OBSERVACIÓN ========== */
 .observacion-container {
     margin-top: 1rem;
@@ -454,6 +485,182 @@ body {
 .observacion-container textarea:focus {
     outline: none;
     border-color: #ff6b6b;
+}
+
+/* ========== ESTILOS PARA COLORES DINÁMICOS (TU CÓDIGO ORIGINAL) ========== */
+.color-grupo {
+    background: #1e1e1e;
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 2px solid #ff6b6b;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.color-grupo:first-child {
+    margin-top: 0.5rem;
+}
+
+.color-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ffd93d;
+}
+
+.color-titulo {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #ffd93d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-eliminar-color {
+    background: #2a2a2a;
+    border: 2px solid #ff6b6b;
+    color: #ff6b6b;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.btn-eliminar-color:hover {
+    background: #ff6b6b;
+    color: white;
+    transform: rotate(90deg);
+}
+
+.color-nombre-grupo {
+    margin-bottom: 1rem;
+}
+
+.color-nombre-grupo input {
+    width: 100%;
+    padding: 0.8rem;
+    background: #2a2a2a;
+    border: 2px solid #ff6b6b;
+    border-radius: 0.8rem;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.color-nombre-grupo input:focus {
+    outline: none;
+    border-color: #ffd93d;
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+}
+
+.color-valores-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.8rem;
+}
+
+.color-valor-item {
+    text-align: center;
+}
+
+.color-valor-item label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #ffd93d;
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+}
+
+.color-valor-item input {
+    width: 100%;
+    padding: 0.5rem;
+    text-align: center;
+    background: #2a2a2a;
+    border: 2px solid #ccc;
+    border-radius: 0.6rem;
+    color: #fff;
+    font-weight: 600;
+}
+
+.color-valor-item input:focus {
+    outline: none;
+    border-color: #ff6b6b;
+}
+
+.color-valor-item:nth-child(1) input {
+    border-color: #60a5fa;
+}
+
+.color-valor-item:nth-child(2) input {
+    border-color: #f472b6;
+}
+
+.color-valor-item:nth-child(3) input {
+    border-color: #fbbf24;
+}
+
+.color-valor-item:nth-child(4) input {
+    border-color: #9ca3af;
+}
+
+/* Botón agregar color */
+.add-color-btn-container {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0 2rem 0;
+}
+
+.btn-add-color {
+    background: linear-gradient(135deg, #4caf50, #45a049);
+    color: white;
+    border: none;
+    border-radius: 2rem;
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.btn-add-color:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+}
+
+.btn-add-color span {
+    font-size: 1.2rem;
+}
+
+/* En la tabla, ajuste para colores múltiples */
+.color-cell {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.color-tag {
+    display: inline-block;
+    background: #333;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.4rem;
+    margin: 0.1rem;
+    font-size: 0.7rem;
+    border-left: 3px solid #ff6b6b;
 }
 
 /* ========== FILTROS Y CALENDARIO ========== */
@@ -662,7 +869,7 @@ body {
     font-size: 0.85rem;
     font-weight: 400;
     letter-spacing: 0.5px;
-    opacity: 1; /* Para Edge */
+    opacity: 1;
 }
 
 .btn-clear {
@@ -748,7 +955,7 @@ body {
     letter-spacing: 0.5px;
     position: relative;
     overflow: hidden;
-    color: white; /* Asegurar color en Edge */
+    color: white;
 }
 
 .filter-btn.print {
@@ -769,18 +976,6 @@ body {
 .filter-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-}
-
-.filter-btn.print:hover {
-    box-shadow: 0 8px 25px rgba(107, 91, 255, 0.5);
-}
-
-.filter-btn.excel:hover {
-    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
-}
-
-.filter-btn.qr:hover {
-    box-shadow: 0 8px 25px rgba(156, 39, 176, 0.5);
 }
 
 .filter-btn .btn-icon-large {
@@ -891,18 +1086,6 @@ tr.has-history {
     background: rgba(255, 217, 61, 0.05);
 }
 
-/* Badge para PO */
-.po-badge {
-    background: #000;
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.5rem;
-    font-weight: bold;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    display: inline-block;
-}
-
 /* ========== BOTONES DE ACCIÓN ========== */
 .action-buttons {
     display: flex;
@@ -968,7 +1151,7 @@ tr.has-history {
     height: 100%;
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px); /* Para Safari/Edge */
+    -webkit-backdrop-filter: blur(8px);
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -1177,7 +1360,7 @@ tr.has-history {
     border-color: #ffd93d;
 }
 
-/* Historial container */
+/* ========== HISTORIAL ========== */
 .historial-container {
     max-height: 400px;
     overflow-y: auto;
@@ -1217,6 +1400,34 @@ tr.has-history {
 .historial-descripcion {
     color: #ffd93d;
     font-size: 0.8rem;
+}
+
+/* ========== ESTILOS PARA IMPRESIÓN QR (TU CÓDIGO ORIGINAL) ========== */
+@media print {
+    .comprobante {
+        border: 2px solid #000 !important;
+    }
+    
+    .po-destacado {
+        font-size: 28px !important;
+    }
+    
+    .version-destacado {
+        font-size: 18px !important;
+    }
+}
+
+/* ========== ESTILOS ESPECIALES PARA VERSIÓN ========== */
+/* Versión en rojo negrita en la tabla */
+td span[style*="background:#ff0000"] {
+    background: #ff0000 !important;
+    font-weight: 900 !important;
+    color: white !important;
+    padding: 0.2rem 0.5rem !important;
+    border-radius: 1rem !important;
+    font-size: 0.75rem !important;
+    box-shadow: 0 2px 5px rgba(255, 0, 0, 0.3) !important;
+    display: inline-block;
 }
 
 /* ========== ANIMACIONES ========== */
@@ -1262,32 +1473,6 @@ tr.has-history {
     text-align: center;
     padding: 2rem;
     font-size: 0.9rem;
-}
-
-/* ========== ESTILOS ESPECIALES PARA VERSIÓN ========== */
-/* Versión en rojo negrita en la tabla */
-td span[style*="background:#ff0000"] {
-    background: #ff0000 !important;
-    font-weight: 900 !important;
-    color: white !important;
-    padding: 0.2rem 0.5rem !important;
-    border-radius: 1rem !important;
-    font-size: 0.75rem !important;
-    box-shadow: 0 2px 5px rgba(255, 0, 0, 0.3) !important;
-    display: inline-block;
-}
-
-/* Badge de versión general */
-.version-badge {
-    background: #ff0000;
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.5rem;
-    font-weight: 900;
-    font-size: 0.9rem;
-    white-space: nowrap;
-    display: inline-block;
-    box-shadow: 0 2px 5px rgba(255, 0, 0, 0.3);
 }
 
 /* ========== RESPONSIVE ========== */
