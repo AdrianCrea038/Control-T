@@ -1183,7 +1183,7 @@ function imprimirReportesHandler() {
     ventanaImpresion.document.close();
 }
 
-// ==================== IMPRESIÓN INDIVIDUAL CON QR CORREGIDO ====================
+// =// ==================== IMPRESIÓN INDIVIDUAL CON QR CORREGIDA ====================
 function imprimirRegistroIndividual(id) {
     const registro = registros.find(r => r.id === id);
     if (!registro) {
@@ -1191,25 +1191,61 @@ function imprimirRegistroIndividual(id) {
         return;
     }
     
+    // Verificar que la librería QR esté cargada
     if (typeof QRCode === 'undefined') {
-        mostrarNotificacion('❌ Error: Librería QR no cargada', 'error');
+        mostrarNotificacion('❌ Error: Librería QR no cargada. Intentando de nuevo...', 'error');
+        console.error('QRCode no está definido');
+        
+        // Intentar cargar la librería dinámicamente
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        script.onload = () => {
+            mostrarNotificacion('✅ Librería QR cargada, intenta nuevamente', 'success');
+        };
+        script.onerror = () => {
+            mostrarNotificacion('❌ No se pudo cargar la librería QR', 'error');
+        };
+        document.head.appendChild(script);
         return;
     }
     
     const ventanaImpresion = window.open('', '_blank');
     
-    // Datos para QR en formato CSV simple (más legible para lectores)
-    let qrText = `ID:${registro.id}|PO:${registro.po || 'S/PO'}|VER:${registro.version}|PROC:${registro.proceso}|FECHA:${registro.fecha}|ESTILO:${registro.estilo}|TELA:${registro.tela}`;
+    // DATOS PARA QR - Formato CSV simple y legible
+    const qrText = [
+        `ID:${registro.id}`,
+        `PO:${registro.po || 'S/PO'}`,
+        `VER:${registro.version}`,
+        `PROC:${registro.proceso}`,
+        `FECHA:${registro.fecha}`,
+        `ESTILO:${registro.estilo}`,
+        `TELA:${registro.tela}`,
+        `REEMP:${registro.esReemplazo ? 'SI' : 'NO'}`,
+        // Monti (CORREGIDO: usar monti_numero)
+        `MONTI N°:${registro.monti_numero || 0}`,
+        `T°MONTI:${(registro.temperatura_monti || 0).toFixed(1)}°C`,
+        `VEL:${(registro.velocidad_monti || 0).toFixed(1)}`,
+        `PRES:${(registro.monti_presion || 0).toFixed(1)}`,
+        // Plotter
+        `PLOTTER N°:${registro.numero_plotter || 0}`,
+        `T°AMB:${(registro.plotter_temp || 0).toFixed(1)}°C`,
+        `HUM:${(registro.plotter_humedad || 0).toFixed(0)}%`,
+        `PERFIL:${registro.plotter_perfil || '-'}`,
+        // Flat
+        `T°FLAT:${(registro.temperatura_flat || 0).toFixed(1)}°C`,
+        `TIEMPO:${(registro.tiempo_flat || 0).toFixed(1)}s`,
+        `ADH:${registro.adhesivo || '-'}`
+    ].join('|');
     
-    // Agregar colores
+    // Colores (si existen)
+    let coloresQR = '';
     if (registro.colores && registro.colores.length > 0) {
-        registro.colores.forEach((c, idx) => {
-            qrText += `|COLOR${idx+1}:${c.nombre}|C:${c.cyan}|M:${c.magenta}|Y:${c.yellow}|K:${c.black}|T:${c.turquesa}|N:${c.naranja}|FY:${c.fluorYellow}|FP:${c.fluorPink}`;
-        });
+        coloresQR = '|' + registro.colores.map((c, idx) => {
+            return `C${idx+1}:${c.nombre}|C:${c.cyan}|M:${c.magenta}|Y:${c.yellow}|K:${c.black}|T:${c.turquesa}|N:${c.naranja}|FY:${c.fluorYellow}|FP:${c.fluorPink}`;
+        }).join('|');
     }
     
-    // Agregar parámetros
-    qrText += `|PLOTTER:${registro.numero_plotter}|TEMP:${registro.plotter_temp}|HUM:${registro.plotter_humedad}|MONTI:${registro.temperatura_monti}|VEL:${registro.velocidad_monti}|FLAT:${registro.temperatura_flat}|TIEMPO:${registro.tiempo_flat}`;
+    const qrDataFinal = qrText + coloresQR;
     
     const htmlContenido = `
         <!DOCTYPE html>
@@ -1230,6 +1266,7 @@ function imprimirRegistroIndividual(id) {
                     border-radius: 15px;
                     max-width: 8.5in;
                     margin: 0 auto;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
                 }
                 .header { 
                     display: flex; 
@@ -1243,10 +1280,19 @@ function imprimirRegistroIndividual(id) {
                     margin: 0;
                     font-size: 28px;
                     font-weight: 800;
+                    color: #000;
                 }
                 .po-version { text-align: right; }
-                .po-destacado { font-size: 32px; font-weight: 900; }
-                .version-destacado { font-size: 24px; font-weight: 900; color: #ff0000; }
+                .po-destacado { 
+                    font-size: 32px; 
+                    font-weight: 900; 
+                    color: #000;
+                }
+                .version-destacado { 
+                    font-size: 24px; 
+                    font-weight: 900; 
+                    color: #ff0000;
+                }
                 .info-principal {
                     display: grid;
                     grid-template-columns: repeat(2, 1fr);
@@ -1262,6 +1308,7 @@ function imprimirRegistroIndividual(id) {
                     margin: 20px 0 10px;
                     padding-bottom: 5px;
                     border-bottom: 2px solid #000;
+                    color: #000;
                 }
                 .colores-lista {
                     margin: 15px 0;
@@ -1297,18 +1344,61 @@ function imprimirRegistroIndividual(id) {
                     border-radius: 8px;
                     border-left: 4px solid #000;
                 }
+                .param-box strong {
+                    display: block;
+                    margin-bottom: 8px;
+                    font-size: 14px;
+                }
                 .qr-section {
                     display: flex;
                     justify-content: center;
                     margin: 20px 0;
+                    padding: 20px;
+                    background: #f9f9f9;
+                    border-radius: 10px;
                 }
-                #qrcode { padding: 15px; background: white; border: 2px solid #000; border-radius: 10px; }
-                .footer { text-align: center; border-top: 2px solid #000; padding-top: 15px; margin-top: 20px; }
-                .qr-note { font-size: 10px; color: #666; text-align: center; margin-top: 5px; }
+                #qrcode { 
+                    padding: 15px; 
+                    background: white; 
+                    border: 2px solid #000; 
+                    border-radius: 10px;
+                    display: inline-block;
+                }
+                #qrcode canvas, #qrcode img {
+                    display: block;
+                    margin: 0 auto;
+                }
+                .qr-note { 
+                    font-size: 10px; 
+                    color: #666; 
+                    text-align: center; 
+                    margin-top: 10px;
+                }
+                .footer { 
+                    text-align: center; 
+                    border-top: 2px solid #000; 
+                    padding-top: 15px; 
+                    margin-top: 20px; 
+                    font-size: 12px; 
+                    color: #666; 
+                }
+                .observacion {
+                    margin-top: 15px;
+                    padding: 10px;
+                    background: #fff3cd;
+                    border-left: 4px solid #ffd93d;
+                    font-style: italic;
+                }
+                .error-message {
+                    color: red;
+                    text-align: center;
+                    padding: 20px;
+                }
             </style>
         </head>
         <body>
             <div class="etiqueta">
+                <!-- HEADER con PO y VERSIÓN -->
                 <div class="header">
                     <h1>⚡ ALPHA DB</h1>
                     <div class="po-version">
@@ -1317,6 +1407,7 @@ function imprimirRegistroIndividual(id) {
                     </div>
                 </div>
                 
+                <!-- Información Principal -->
                 <div class="info-principal">
                     <div><strong>Fecha:</strong> ${formatearFecha(registro.fecha)}</div>
                     <div><strong>Semana:</strong> ${registro.semana}</div>
@@ -1326,6 +1417,7 @@ function imprimirRegistroIndividual(id) {
                     <div><strong>Reemplazo:</strong> ${registro.esReemplazo ? 'SÍ' : 'NO'}</div>
                 </div>
                 
+                <!-- COLORES -->
                 <div class="seccion-titulo">🎨 ESPECIFICACIÓN DE COLORES</div>
                 <div class="colores-lista">
                     ${registro.colores && registro.colores.length > 0 ? 
@@ -1344,57 +1436,91 @@ function imprimirRegistroIndividual(id) {
                                 </div>
                             </div>
                         `).join('') 
-                        : '<div class="color-item">Sin especificar</div>'
+                        : '<div class="color-item">Sin colores especificados</div>'
                     }
                 </div>
                 
+                <!-- PARÁMETROS DE PRODUCCIÓN -->
                 <div class="seccion-titulo">⚙️ PARÁMETROS</div>
                 <div class="parametros-grid">
+                    <!-- PLOTTER -->
                     <div class="param-box">
-                        <strong>🖨️ PLOTTER</strong><br>
+                        <strong>🖨️ PLOTTER</strong>
                         N° ${registro.numero_plotter || 0}<br>
                         Temp: ${(registro.plotter_temp || 0).toFixed(1)}°C<br>
                         Hum: ${(registro.plotter_humedad || 0).toFixed(0)}%<br>
                         Perfil: ${registro.plotter_perfil || '-'}
                     </div>
+                    
+                    <!-- MONTI - CORREGIDO: ahora muestra monti_numero -->
                     <div class="param-box">
-                        <strong>🔥 MONTI</strong><br>
+                        <strong>🔥 MONTI</strong>
                         N° ${registro.monti_numero || 0}<br>
                         Temp: ${(registro.temperatura_monti || 0).toFixed(1)}°C<br>
                         Vel: ${(registro.velocidad_monti || 0).toFixed(1)} m/min<br>
                         Presión: ${(registro.monti_presion || 0).toFixed(1)} bar
                     </div>
+                    
+                    <!-- FLAT -->
                     <div class="param-box">
-                        <strong>📏 FLAT</strong><br>
+                        <strong>📏 FLAT</strong>
                         Temp: ${(registro.temperatura_flat || 0).toFixed(1)}°C<br>
                         Tiempo: ${(registro.tiempo_flat || 0).toFixed(1)} s<br>
                         Adhesivo: ${registro.adhesivo || '-'}
                     </div>
                 </div>
                 
+                <!-- CÓDIGO QR -->
                 <div class="qr-section">
                     <div id="qrcode"></div>
                 </div>
-                <div class="qr-note">Código QR - Escanea para más información</div>
+                <div class="qr-note">Escanea para obtener información del registro</div>
                 
-                ${registro.observacion ? `<div style="margin-top:15px; padding:10px; background:#fff3cd; border-left:4px solid #ffd93d;">📝 ${registro.observacion}</div>` : ''}
+                <!-- Observación (si existe) -->
+                ${registro.observacion ? `
+                    <div class="observacion">
+                        <strong>📝 Observación:</strong> ${registro.observacion}
+                    </div>
+                ` : ''}
                 
+                <!-- FOOTER -->
                 <div class="footer">
-                    <p><strong>ALPHA DB</strong> - Alpha Data Base</p>
+                    <p><strong>ALPHA DB</strong> - Alpha Data Base | Trazabilidad Textil</p>
                     <div>ID: ${registro.id} | Impreso: ${new Date().toLocaleString()}</div>
                 </div>
             </div>
             
             <script>
-                new QRCode(document.getElementById("qrcode"), {
-                    text: ${JSON.stringify(qrText)},
-                    width: 150,
-                    height: 150,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                window.onload = () => setTimeout(() => window.print(), 1000);
+                (function() {
+                    try {
+                        // Verificar que QRCode existe
+                        if (typeof QRCode === 'undefined') {
+                            throw new Error('QRCode no está definido');
+                        }
+                        
+                        // Crear el código QR
+                        var qr = new QRCode(document.getElementById("qrcode"), {
+                            text: ${JSON.stringify(qrDataFinal)},
+                            width: 200,
+                            height: 200,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                        
+                        console.log('QR generado correctamente');
+                    } catch (e) {
+                        console.error('Error generando QR:', e);
+                        document.getElementById("qrcode").innerHTML = '<div style="color:red; padding:20px; text-align:center;">Error al generar QR</div>';
+                    }
+                    
+                    // Imprimir después de un breve retraso
+                    window.onload = function() {
+                        setTimeout(function() {
+                            window.print();
+                        }, 1500);
+                    };
+                })();
             <\/script>
         </body>
         </html>
@@ -1403,36 +1529,6 @@ function imprimirRegistroIndividual(id) {
     ventanaImpresion.document.write(htmlContenido);
     ventanaImpresion.document.close();
 }
-
-function abrirModalSeleccionRegistro() {
-    const select = document.getElementById('selectRegistroImprimir');
-    const modal = document.getElementById('modalImpresion');
-    
-    if (!select || !modal) return;
-    
-    if (registros.length === 0) {
-        select.innerHTML = '<option value="">No hay registros</option>';
-    } else {
-        select.innerHTML = registros.map(reg => {
-            return `<option value="${reg.id}">${reg.po || 'S/PO'} v${reg.version || 1} | ${reg.fecha} | ${reg.estilo}</option>`;
-        }).join('');
-    }
-    
-    modal.classList.add('show');
-}
-
-function imprimirRegistroSeleccionado() {
-    const select = document.getElementById('selectRegistroImprimir');
-    const id = select ? select.value : null;
-    
-    if (id) {
-        document.getElementById('modalImpresion').classList.remove('show');
-        imprimirRegistroIndividual(id);
-    } else {
-        mostrarNotificacion('❌ Selecciona un registro', 'error');
-    }
-}
-
 // Hacer funciones globales
 window.editarRegistro = editarRegistro;
 window.verHistorial = verHistorial;
