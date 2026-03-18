@@ -18,7 +18,7 @@
                 <div class="logo-container">
                     <img src="/Users/carlosreyes/Desktop/Alpha DT/logo-Alpha.png" alt="Alpha DB Logo" class="logo-img" onerror="this.style.display='none'">
                     <h1>⚡ ALPHA DB</h1>
-                    <span class="version">v8.2</span>
+                    <span class="version">v8.4</span>
                 </div>
                 <div class="header-actions">
                     <button id="exportarDBBtn" class="btn-secondary">
@@ -107,79 +107,23 @@
                     </div>
                 </div>
 
-                <!-- Título COLORES -->
+                <!-- ===== SECCIÓN DE COLORES MÚLTIPLES ===== -->
                 <div class="section-title-bonito">
                     <span class="title-icon">🎨</span>
-                    <h3>COLORES</h3>
+                    <h3>ESPECIFICACIÓN DE COLORES</h3>
                     <span class="title-decoration"></span>
                 </div>
 
-                <!-- Fila 4: CMYK -->
-                <div class="form-row cuatro-col">
-                    <div class="form-group card-group color-card">
-                        <label for="cyan">
-                            <span class="label-icon" style="color: #60a5fa;">🟦</span>
-                            <span class="label-text">CYAN</span>
-                        </label>
-                        <input type="number" id="cyan" step="0.1" min="0" max="100" placeholder="0-100%" class="input-color">
-                    </div>
-                    <div class="form-group card-group color-card">
-                        <label for="magenta">
-                            <span class="label-icon" style="color: #f472b6;">🟪</span>
-                            <span class="label-text">MAGENTA</span>
-                        </label>
-                        <input type="number" id="magenta" step="0.1" min="0" max="100" placeholder="0-100%" class="input-color">
-                    </div>
-                    <div class="form-group card-group color-card">
-                        <label for="yellow">
-                            <span class="label-icon" style="color: #fbbf24;">🟨</span>
-                            <span class="label-text">AMARILLO</span>
-                        </label>
-                        <input type="number" id="yellow" step="0.1" min="0" max="100" placeholder="0-100%" class="input-color">
-                    </div>
-                    <div class="form-group card-group color-card">
-                        <label for="black">
-                            <span class="label-icon" style="color: #9ca3af;">⬛</span>
-                            <span class="label-text">NEGRO</span>
-                        </label>
-                        <input type="number" id="black" step="0.1" min="0" max="100" placeholder="0-100%" class="input-color">
-                    </div>
+                <!-- Contenedor para múltiples colores -->
+                <div id="coloresContainer">
+                    <!-- Los colores se agregarán aquí dinámicamente -->
                 </div>
 
-                <!-- Fila 5: Colores extras (con nombres fijos) -->
-                <div class="form-row cuatro-col">
-                    <div class="form-group card-group color-card">
-                        <label for="color1_valor">
-                            <span class="label-icon" style="color: #40e0d0;">🟦</span>
-                            <span class="label-text">TURQUESA</span>
-                        </label>
-                        <input type="hidden" id="color1_nombre" value="TURQUESA">
-                        <input type="number" id="color1_valor" step="0.1" min="0" max="100" placeholder="0-100%" class="input-color">
-                    </div>
-                    <div class="form-group card-group color-card">
-                        <label for="color2_valor">
-                            <span class="label-icon" style="color: #ffa500;">🟧</span>
-                            <span class="label-text">NARANJA</span>
-                        </label>
-                        <input type="hidden" id="color2_nombre" value="NARANJA">
-                        <input type="number" id="color2_valor" step="0.1" min="0" max="100" placeholder="0-100%" class="input-color">
-                    </div>
-                    <div class="form-group card-group color-card">
-                        <label for="color3_valor">
-                            <span class="label-icon" style="color: #ffff00;">🟡</span>
-                            <span class="label-text">FLUOR YELLOW</span>
-                        </label>
-                        <input type="hidden" id="color3_nombre" value="FLUOR YELLOW">
-                        <input type="number" id="color3_valor" step="0.1" min="0" max="100" placeholder="0-100%" class="input-color">
-                    </div>
-                    <div class="form-group card-group color-card">
-                        <label for="color4_valor">
-                            <span class="label-icon" style="color: #ff69b4;">🟣</span>
-                            <span class="label-text">FLUOR PINK</span>
-                        </label>
-                        <input type="hidden" id="color4_nombre" value="FLUOR PINK">
-                        <input type="number" id="color4_valor" step="0.1" min="0" max="100" placeholder="0-100%" class="input-color">
-                    </div>
+                <!-- Botón para agregar más colores -->
+                <div class="add-color-btn-container">
+                    <button type="button" id="agregarColorBtn" class="btn-add-color">
+                        <span>➕</span> AGREGAR NUEVO COLOR
+                    </button>
                 </div>
 
                 <!-- Título PLOTTER -->
@@ -338,7 +282,7 @@
                         </div>
                     </div>
                     
-                    <!-- Botones de acción (3 botones) -->
+                    <!-- Botones de acción -->
                     <div class="filter-buttons three-buttons">
                         <button id="imprimirReportesBtn" class="filter-btn print">
                             <span class="btn-icon-large">🖨️</span>
@@ -378,14 +322,7 @@
                             <th>FECHA</th>
                             <th>ESTILO</th>
                             <th>TELA</th>
-                            <th>C</th>
-                            <th>M</th>
-                            <th>Y</th>
-                            <th>K</th>
-                            <th>TURQ</th>
-                            <th>ORA</th>
-                            <th>F.YEL</th>
-                            <th>F.PNK</th>
+                            <th colspan="2">COLORES</th>
                             <th>PLOTTER</th>
                             <th>ADH</th>
                             <th>T°M</th>
@@ -397,7 +334,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="23" class="loading">Cargando registros...</td>
+                            <td colspan="17" class="loading">Cargando registros...</td>
                         </tr>
                     </tbody>
                 </table>
