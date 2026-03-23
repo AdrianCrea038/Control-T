@@ -370,3 +370,31 @@ window.addEventListener('click', (e) => {
         if (e.target === modal) modal.classList.remove('show');
     });
 });
+
+// Cerrar modales
+function cerrarModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.remove('show');
+}
+
+function cerrarTodosModales() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.remove('show');
+    });
+}
+
+// Eventos para cerrar modales
+document.querySelectorAll('.modal-close, .close-btn, .cancel-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const modal = this.closest('.modal');
+        if (modal) modal.classList.remove('show');
+    });
+});
+
+// Cerrar al hacer clic fuera del modal
+window.addEventListener('click', function(e) {
+    if (e.target.classList && e.target.classList.contains('modal')) {
+        e.target.classList.remove('show');
+    }
+});
