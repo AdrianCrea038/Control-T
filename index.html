@@ -209,32 +209,39 @@
         </section>
     </div>
 
-   <div id="modalHistorial" class="modal">
+  <!-- Modal Historial -->
+<div id="modalHistorial" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h3>HISTORIAL DE EDICIONES</h3>
-            <button class="modal-close" onclick="window.cerrarModalHistorial()">✕</button>
+            <button class="modal-close" onclick="this.closest('.modal').classList.remove('show')">✕</button>
         </div>
         <div class="modal-body">
             <div id="historialContainer"></div>
         </div>
         <div class="modal-footer">
-            <button class="modal-btn close-btn" onclick="window.cerrarModalHistorial()">CERRAR</button>
+            <button class="modal-btn close-btn" onclick="this.closest('.modal').classList.remove('show')">CERRAR</button>
         </div>
     </div>
 </div>
 
-    <div id="modalImpresion" class="modal">
-        <div class="modal-content">
-            <div class="modal-header"><h3>IMPRIMIR COMPROBANTE QR</h3><button class="modal-close">✕</button></div>
-            <div class="modal-body">
-                <select id="selectRegistroImprimir" style="width:100%; padding:0.8rem; background:#2a2a2a; border:2px solid #ff6b6b; border-radius:1rem; color:white; margin-bottom:1rem;">
-                    <option value="">— Elige un registro —</option>
-                </select>
-                <button id="imprimirIndividualBtnAction" class="modal-action-btn" style="width:100%; padding:1rem; background:linear-gradient(135deg,#ff6b6b,#ff8e8e); border:none; border-radius:1rem; color:white; font-weight:bold; cursor:pointer;">IMPRIMIR CON QR</button>
-            </div>
-            <div class="modal-footer"><button class="modal-btn cancel-btn">CANCELAR</button></div>
+<!-- Modal Impresión -->
+<div id="modalImpresion" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>IMPRIMIR COMPROBANTE QR</h3>
+            <button class="modal-close" onclick="this.closest('.modal').classList.remove('show')">✕</button>
+        </div>
+        <div class="modal-body">
+            <select id="selectRegistroImprimir" style="width:100%; padding:0.8rem; background:#2a2a2a; border:2px solid #ff6b6b; border-radius:1rem; color:white; margin-bottom:1rem;">
+                <option value="">— Elige un registro —</option>
+            </select>
+            <button id="imprimirIndividualBtnAction" style="width:100%; padding:1rem; background:linear-gradient(135deg,#ff6b6b,#ff8e8e); border:none; border-radius:1rem; color:white; font-weight:bold; cursor:pointer;">IMPRIMIR CON QR</button>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn cancel-btn" onclick="this.closest('.modal').classList.remove('show')">CANCELAR</button>
         </div>
     </div>
+</div>
 </body>
 </html>x
