@@ -24,6 +24,61 @@ body {
     background: transparent;
 }
 
+/* ========== ANIMACIONES GLOBALES ========== */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 /* ========== HEADER ========== */
 .header {
     background: linear-gradient(135deg, #1a1a1a, #222222);
@@ -140,6 +195,12 @@ body {
     font-size: 1.1rem;
 }
 
+.btn-primary {
+    background: linear-gradient(135deg, #4caf50, #45a049);
+    border: none;
+    color: white;
+}
+
 /* ========== FORMULARIO ========== */
 .form-section {
     background: linear-gradient(135deg, #1a1a1a, #1e1e1e);
@@ -180,6 +241,22 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
+}
+
+.three-col {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.cuatro-col {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.flat-row {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.full-width {
+    grid-column: 1 / -1;
 }
 
 /* ========== CARD GROUP ========== */
@@ -243,22 +320,6 @@ body {
     opacity: 1;
 }
 
-/* Inputs específicos focus */
-.input-plotter:focus {
-    border-color: #9c27b0;
-    box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.2);
-}
-
-.input-monti:focus {
-    border-color: #ff9800;
-    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
-}
-
-.input-flat:focus {
-    border-color: #00bcd4;
-    box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.2);
-}
-
 /* ========== SELECT ========== */
 .select-bonito {
     width: 100%;
@@ -290,16 +351,7 @@ body {
     padding: 0.5rem;
 }
 
-/* ========== CHECKBOX DE REEMPLAZO (TU CÓDIGO ORIGINAL) ========== */
-.checkbox-row {
-    margin: 0.5rem 0;
-}
-
-.checkbox-group {
-    display: flex;
-    align-items: center;
-}
-
+/* ========== CHECKBOX ========== */
 .checkbox-label {
     display: flex;
     align-items: center;
@@ -318,30 +370,6 @@ body {
     height: 1.2rem;
     cursor: pointer;
     accent-color: #ff6b6b;
-}
-
-/* ========== SELECTOR DE PROCESO (TU CÓDIGO ORIGINAL) ========== */
-.select-proceso {
-    width: 100%;
-    padding: 1rem;
-    background: #2a2a2a;
-    border: 1px solid #ff6b6b;
-    border-radius: 1rem;
-    color: #fff;
-    font-size: 0.95rem;
-    cursor: pointer;
-}
-
-.select-proceso option {
-    background: #2a2a2a;
-    color: #fff;
-    padding: 0.5rem;
-}
-
-.select-proceso:focus {
-    outline: none;
-    border-color: #ffd93d;
-    box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.1);
 }
 
 /* ========== TÍTULOS DE SECCIÓN ========== */
@@ -389,7 +417,6 @@ body {
     letter-spacing: 1px;
     box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
     border-radius: 0.8rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
     width: 100%;
     height: 100%;
     animation: gradientShift 3s ease infinite;
@@ -404,90 +431,7 @@ body {
     box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
 }
 
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* ========== GRIDS ========== */
-.three-col {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-.cuatro-col {
-    grid-template-columns: repeat(4, 1fr);
-}
-
-.flat-row {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-.full-width {
-    grid-column: 1 / -1;
-}
-
-/* ========== ESTILOS PARA PO Y VERSIÓN (TU CÓDIGO ORIGINAL) ========== */
-.po-badge {
-    background: #000;
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.5rem;
-    font-weight: bold;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    display: inline-block;
-}
-
-.version-badge {
-    background: #ffd93d;
-    color: black;
-    padding: 0.2rem 0.5rem;
-    border-radius: 1rem;
-    font-weight: bold;
-    font-size: 0.7rem;
-    white-space: nowrap;
-    display: inline-block;
-}
-
-/* ========== OBSERVACIÓN ========== */
-.observacion-container {
-    margin-top: 1rem;
-    padding: 0.8rem;
-    background: #2a2a2a;
-    border-radius: 0.8rem;
-    border: 1px solid #ffd93d;
-    animation: fadeIn 0.3s;
-}
-
-.observacion-container label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #ffd93d;
-    margin-bottom: 0.5rem;
-}
-
-.observacion-container textarea {
-    width: 100%;
-    padding: 0.6rem;
-    background: #1a1a1a;
-    border: 1px solid rgba(255, 107, 107, 0.2);
-    border-radius: 0.6rem;
-    color: #fff;
-    font-size: 0.8rem;
-    resize: vertical;
-    font-family: inherit;
-}
-
-.observacion-container textarea:focus {
-    outline: none;
-    border-color: #ff6b6b;
-}
-
-/* ========== ESTILOS PARA COLORES DINÁMICOS (TU CÓDIGO ORIGINAL) ========== */
+/* ========== ESTILOS PARA COLORES DINÁMICOS ========== */
 .color-grupo {
     background: #1e1e1e;
     border-radius: 1rem;
@@ -597,22 +541,6 @@ body {
     border-color: #ff6b6b;
 }
 
-.color-valor-item:nth-child(1) input {
-    border-color: #60a5fa;
-}
-
-.color-valor-item:nth-child(2) input {
-    border-color: #f472b6;
-}
-
-.color-valor-item:nth-child(3) input {
-    border-color: #fbbf24;
-}
-
-.color-valor-item:nth-child(4) input {
-    border-color: #9ca3af;
-}
-
 /* Botón agregar color */
 .add-color-btn-container {
     display: flex;
@@ -641,18 +569,6 @@ body {
     box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
 }
 
-.btn-add-color span {
-    font-size: 1.2rem;
-}
-
-/* En la tabla, ajuste para colores múltiples */
-.color-cell {
-    max-width: 200px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 .color-tag {
     display: inline-block;
     background: #333;
@@ -661,6 +577,43 @@ body {
     margin: 0.1rem;
     font-size: 0.7rem;
     border-left: 3px solid #ff6b6b;
+}
+
+/* ========== OBSERVACIÓN ========== */
+.observacion-container {
+    margin-top: 1rem;
+    padding: 0.8rem;
+    background: #2a2a2a;
+    border-radius: 0.8rem;
+    border: 1px solid #ffd93d;
+    animation: fadeIn 0.3s;
+}
+
+.observacion-container label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #ffd93d;
+    margin-bottom: 0.5rem;
+}
+
+.observacion-container textarea {
+    width: 100%;
+    padding: 0.6rem;
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 107, 107, 0.2);
+    border-radius: 0.6rem;
+    color: #fff;
+    font-size: 0.8rem;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.observacion-container textarea:focus {
+    outline: none;
+    border-color: #ff6b6b;
 }
 
 /* ========== FILTROS Y CALENDARIO ========== */
@@ -705,7 +658,6 @@ body {
     align-items: start;
 }
 
-/* Panel derecho */
 .filters-right-panel {
     display: flex;
     flex-direction: column;
@@ -932,7 +884,7 @@ body {
     font-size: 0.8rem;
 }
 
-/* Botones de filtro - 3 botones */
+/* Botones de filtro */
 .filter-buttons.three-buttons {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -953,8 +905,6 @@ body {
     transition: all 0.3s;
     font-size: 0.85rem;
     letter-spacing: 0.5px;
-    position: relative;
-    overflow: hidden;
     color: white;
 }
 
@@ -1086,6 +1036,17 @@ tr.has-history {
     background: rgba(255, 217, 61, 0.05);
 }
 
+.po-badge {
+    background: #000;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: bold;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    display: inline-block;
+}
+
 /* ========== BOTONES DE ACCIÓN ========== */
 .action-buttons {
     display: flex;
@@ -1151,7 +1112,6 @@ tr.has-history {
     height: 100%;
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -1160,17 +1120,6 @@ tr.has-history {
 .modal.show {
     display: flex;
     animation: modalFadeIn 0.3s;
-}
-
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
 }
 
 .modal-content {
@@ -1254,18 +1203,28 @@ tr.has-history {
     padding: 1.5rem;
 }
 
-.modal-select-container {
-    margin-bottom: 1.5rem;
+.modal-footer {
+    padding: 1rem 1.5rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
 }
 
-.modal-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.modal-btn {
+    padding: 0.6rem 1.5rem;
+    background: #2a2a2a;
+    border: 2px solid #ff6b6b;
+    color: #ffd93d;
+    border-radius: 2rem;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #ffd93d;
-    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-btn:hover {
+    background: #ff6b6b;
+    color: white;
+    border-color: #ffd93d;
 }
 
 .modal-select {
@@ -1278,8 +1237,6 @@ tr.has-history {
     font-size: 0.95rem;
     cursor: pointer;
     appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ff6b6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 1rem center;
@@ -1320,44 +1277,12 @@ tr.has-history {
     box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
 }
 
-.modal-action-btn .btn-icon {
-    font-size: 1.2rem;
-    background: transparent;
-    border: none;
-    padding: 0;
-    min-width: auto;
-}
-
 .modal-action-btn .btn-badge {
     background: rgba(255, 255, 255, 0.2);
     padding: 0.3rem 0.6rem;
     border-radius: 2rem;
     font-size: 0.7rem;
     font-weight: 600;
-}
-
-.modal-footer {
-    padding: 1rem 1.5rem 1.5rem;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.modal-btn {
-    padding: 0.6rem 1.5rem;
-    background: #2a2a2a;
-    border: 2px solid #ff6b6b;
-    color: #ffd93d;
-    border-radius: 2rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.modal-btn:hover {
-    background: #ff6b6b;
-    color: white;
-    border-color: #ffd93d;
 }
 
 /* ========== HISTORIAL ========== */
@@ -1397,75 +1322,9 @@ tr.has-history {
     font-weight: 600;
 }
 
-.historial-descripcion {
-    color: #ffd93d;
-    font-size: 0.8rem;
-}
-
-/* ========== ESTILOS PARA IMPRESIÓN QR (TU CÓDIGO ORIGINAL) ========== */
-@media print {
-    .comprobante {
-        border: 2px solid #000 !important;
-    }
-    
-    .po-destacado {
-        font-size: 28px !important;
-    }
-    
-    .version-destacado {
-        font-size: 18px !important;
-    }
-}
-
-/* ========== ESTILOS ESPECIALES PARA VERSIÓN ========== */
-/* Versión en rojo negrita en la tabla */
-td span[style*="background:#ff0000"] {
-    background: #ff0000 !important;
-    font-weight: 900 !important;
-    color: white !important;
-    padding: 0.2rem 0.5rem !important;
-    border-radius: 1rem !important;
-    font-size: 0.75rem !important;
-    box-shadow: 0 2px 5px rgba(255, 0, 0, 0.3) !important;
-    display: inline-block;
-}
-
-/* ========== ANIMACIONES ========== */
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slideOut {
-    from {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
+/* ========== UTILIDADES ========== */
 .loading {
     animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
 }
 
 .no-data {
@@ -1475,11 +1334,34 @@ td span[style*="background:#ff0000"] {
     font-size: 0.9rem;
 }
 
+/* ========== ESTILOS DE IMPRESIÓN ========== */
+@media print {
+    .header-actions, .filters-section, .form-section, .action-buttons, .modal, .btn, button {
+        display: none !important;
+    }
+    
+    .table-section {
+        background: white;
+        color: black;
+        box-shadow: none;
+        padding: 0;
+    }
+    
+    table {
+        color: black;
+    }
+    
+    th {
+        background: #000 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1200px) {
-    .three-col,
-    .cuatro-col,
-    .flat-row {
+    .three-col, .cuatro-col, .flat-row {
         grid-template-columns: repeat(2, 1fr);
     }
     
@@ -1497,10 +1379,7 @@ td span[style*="background:#ff0000"] {
         padding: 1rem;
     }
     
-    .three-col,
-    .cuatro-col,
-    .flat-row,
-    .filters-grid {
+    .three-col, .cuatro-col, .flat-row, .filters-grid {
         grid-template-columns: 1fr;
     }
     
@@ -1530,5 +1409,34 @@ td span[style*="background:#ff0000"] {
     
     .search-hint {
         justify-content: center;
+    }
+    
+    .header-actions {
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .form-row {
+        gap: 0.5rem;
+    }
+    
+    .card-group {
+        padding: 0.5rem;
+    }
+    
+    th, td {
+        padding: 0.3rem 0.2rem;
+        font-size: 0.65rem;
     }
 }
