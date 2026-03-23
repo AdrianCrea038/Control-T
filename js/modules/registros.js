@@ -21,15 +21,25 @@ const RegistrosModule = {
     guardar: async function(datos) {
         const editId = document.getElementById('editId').value;
         const ahora = new Date().toISOString();
+        
+        // Asegurar que el ID existe para edición
+        if (editId && !datos.id) {
+            datos.id = editId;
+        }
+        
         const registroData = { ...datos, actualizado: ahora, version: 1 };
         
         if (editId) {
+            // Edición - asegurar que el ID es correcto
+            registroData.id = editId;
+            
             const index = AppState.registros.findIndex(r => r.id === editId);
             if (index !== -1) {
                 const original = AppState.registros[index];
                 if (!AppState.historialEdiciones[editId]) AppState.historialEdiciones[editId] = [];
                 AppState.historialEdiciones[editId].push({
-                    fecha: ahora, descripcion: datos.descripcionEdicion || 'Edición',
+                    fecha: ahora, 
+                    descripcion: datos.descripcionEdicion || 'Edición',
                     anterior: { po: original.po, proceso: original.proceso, version: original.version },
                     nuevo: { po: registroData.po, proceso: registroData.proceso, version: registroData.version }
                 });
@@ -54,6 +64,7 @@ const RegistrosModule = {
                 return true;
             }
         } else {
+            // Nuevo registro - generar ID único
             registroData.id = Utils.generarIdUnico();
             registroData.creado = ahora;
             AppState.addRegistro(registroData);
@@ -84,16 +95,19 @@ const RegistrosModule = {
             const el = document.getElementById(id);
             return el ? el.value : defaultValue;
         };
+        
         const getNumero = (id, defaultValue = 0) => {
             const el = document.getElementById(id);
             if (!el) return defaultValue;
             const val = parseFloat(el.value);
             return isNaN(val) ? defaultValue : val;
         };
+        
         const getCheck = (id, defaultValue = false) => {
             const el = document.getElementById(id);
             return el ? el.checked : defaultValue;
         };
+        
         const fechaStr = getValor('fecha', new Date().toISOString().split('T')[0]);
         const fecha = new Date(fechaStr);
         
@@ -117,6 +131,7 @@ const RegistrosModule = {
             tiempo_flat: getNumero('tiempo_flat', 0),
             adhesivo: getValor('adhesivo', '').toUpperCase(),
             observacion: getValor('observacion', null),
+            descripcionEdicion: null,
             semana: Utils.obtenerSemana(fecha)
         };
     },
@@ -126,6 +141,7 @@ const RegistrosModule = {
             const el = document.getElementById(id);
             if (el) el.value = valor !== undefined && valor !== null ? valor : '';
         };
+        
         const setCheck = (id, valor) => {
             const el = document.getElementById(id);
             if (el) el.checked = valor || false;
