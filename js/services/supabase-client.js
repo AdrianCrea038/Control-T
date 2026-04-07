@@ -1,5 +1,6 @@
 // ============================================================
 // js/services/supabase-client.js - Cliente de Supabase
+// Versión: Con funciones para solicitudes y bandeja
 // ============================================================
 
 const SupabaseClient = {
@@ -83,6 +84,116 @@ const SupabaseClient = {
         }
     },
     
+    // ========== SOLICITUDES ==========
+    
+    getSolicitudes: async function() {
+        if (!this.init()) return null;
+        
+        try {
+            const { data, error } = await this.client
+                .from('solicitudes')
+                .select('*')
+                .order('fecha', { ascending: false });
+            
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Error cargando solicitudes:', error);
+            return null;
+        }
+    },
+    
+    guardarSolicitud: async function(solicitud) {
+        if (!this.init()) return null;
+        
+        try {
+            const { data, error } = await this.client
+                .from('solicitudes')
+                .upsert(solicitud)
+                .select();
+            
+            if (error) throw error;
+            console.log('✅ Solicitud guardada en Supabase:', solicitud.id);
+            return data;
+        } catch (error) {
+            console.error('Error guardando solicitud:', error);
+            return null;
+        }
+    },
+    
+    eliminarSolicitud: async function(id) {
+        if (!this.init()) return false;
+        
+        try {
+            const { error } = await this.client
+                .from('solicitudes')
+                .delete()
+                .eq('id', id);
+            
+            if (error) throw error;
+            console.log('✅ Solicitud eliminada de Supabase:', id);
+            return true;
+        } catch (error) {
+            console.error('Error eliminando solicitud:', error);
+            return false;
+        }
+    },
+    
+    // ========== BANDEJA DE ENTRADA ==========
+    
+    getBandejaItems: async function() {
+        if (!this.init()) return null;
+        
+        try {
+            const { data, error } = await this.client
+                .from('bandeja_entrada')
+                .select('*')
+                .order('fecha', { ascending: false });
+            
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Error cargando bandeja:', error);
+            return null;
+        }
+    },
+    
+    guardarBandejaItem: async function(item) {
+        if (!this.init()) return null;
+        
+        try {
+            const { data, error } = await this.client
+                .from('bandeja_entrada')
+                .upsert(item)
+                .select();
+            
+            if (error) throw error;
+            console.log('✅ Item guardado en bandeja:', item.id);
+            return data;
+        } catch (error) {
+            console.error('Error guardando item en bandeja:', error);
+            return null;
+        }
+    },
+    
+    eliminarBandejaItem: async function(id) {
+        if (!this.init()) return false;
+        
+        try {
+            const { error } = await this.client
+                .from('bandeja_entrada')
+                .delete()
+                .eq('id', id);
+            
+            if (error) throw error;
+            console.log('✅ Item eliminado de bandeja:', id);
+            return true;
+        } catch (error) {
+            console.error('Error eliminando item de bandeja:', error);
+            return false;
+        }
+    },
+    
     // ========== REGISTROS ==========
     
     getRegistros: async function() {
@@ -154,4 +265,4 @@ const SupabaseClient = {
 };
 
 window.SupabaseClient = SupabaseClient;
-console.log('✅ SupabaseClient cargado');
+console.log('✅ SupabaseClient cargado - Con funciones para solicitudes y bandeja');
