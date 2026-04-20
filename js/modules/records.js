@@ -33,7 +33,7 @@ const RecordsModule = {
             fecha: datos.fecha,
             estilo: datos.estilo || '',
             tela: datos.tela || '',
-            colores: datos.colores || [],
+            nks: datos.nks || [],
             numero_plotter: datos.numero_plotter || 0,
             plotter_temp: datos.plotter_temp || 0,
             plotter_humedad: datos.plotter_humedad || 0,
@@ -45,8 +45,13 @@ const RecordsModule = {
             temperatura_flat: datos.temperatura_flat || 0,
             tiempo_flat: datos.tiempo_flat || 0,
             adhesivo: datos.adhesivo || '',
-            version: 1,
+            version: editId ? (datos.esOrdenNueva ? 1 : 2) : 1, // Si es orden nueva, vuelve a versión 1
+            editado: editId ? !datos.esOrdenNueva : false, // Solo marcado como editado si NO es orden nueva
+            descripcion_edicion: datos.esOrdenNueva ? null : datos.descripcionEdicion,
             observacion: datos.observacion || null,
+            reformulacion_estado: datos.reformulacion_estado || 'no_requiere',
+            reformulacion_tiempo: datos.reformulacion_tiempo || 0,
+            en_produccion: datos.en_produccion || false,
             creado: editId ? null : ahora,
             actualizado: ahora
         };
@@ -144,11 +149,11 @@ const RecordsModule = {
         return {
             po: getValor('po', '').toUpperCase(),
             proceso: getValor('proceso', ''),
-            es_reemplazo: getCheck('esReemplazo', false),
+            es_reemplazo: false, // Ahora se maneja internamente al guardar
             fecha: fechaStr,
             estilo: getValor('estilo', '').toUpperCase(),
             tela: getValor('tela', '').toUpperCase(),
-            colores: window.ColorsModule ? window.ColorsModule.obtenerDelFormulario() : [],
+            nks: window.ColorsModule ? window.ColorsModule.obtenerDelFormulario() : [],
             numero_plotter: getNumero('numero_plotter', 0),
             plotter_temp: getNumero('plotter_temp', 0),
             plotter_humedad: getNumero('plotter_humedad', 0),
@@ -161,6 +166,8 @@ const RecordsModule = {
             tiempo_flat: getNumero('tiempo_flat', 0),
             adhesivo: getValor('adhesivo', '').toUpperCase(),
             observacion: getValor('observacion', null),
+            reformulacion_estado: getValor('reformulacionEstado', 'no_requiere'),
+            reformulacion_tiempo: getNumero('reformulacionTiempo', 0),
             descripcionEdicion: null,
             semana: Utils.obtenerSemana(fecha)
         };
@@ -179,13 +186,14 @@ const RecordsModule = {
         
         setValor('po', reg.po);
         setValor('proceso', reg.proceso);
-        setCheck('esReemplazo', reg.es_reemplazo);
         setValor('fecha', reg.fecha);
         setValor('estilo', reg.estilo);
         setValor('tela', reg.tela);
         
         if (window.ColorsModule && window.ColorsModule.cargarEnFormulario) {
-            window.ColorsModule.cargarEnFormulario(reg.colores || []);
+            // Usar reg.nks (nueva estructura) o reg.colores (legacy)
+            const datosColores = reg.nks || (reg.colores ? [{ nk: reg.tela || 'SIN NK', colores: reg.colores }] : []);
+            window.ColorsModule.cargarEnFormulario(datosColores);
         }
         
         setValor('numero_plotter', reg.numero_plotter);
@@ -199,6 +207,13 @@ const RecordsModule = {
         setValor('temp_flat', reg.temperatura_flat);
         setValor('tiempo_flat', reg.tiempo_flat);
         setValor('adhesivo', reg.adhesivo);
+        setValor('reformulacionEstado', reg.reformulacion_estado || 'no_requiere');
+        setValor('reformulacionTiempo', reg.reformulacion_tiempo || 0);
+        
+        // Mostrar/ocultar tiempo según estado
+        const tiempoRow = document.getElementById('reformulacionTiempoRow');
+        if (tiempoRow) tiempoRow.style.display = (reg.reformulacion_estado === 'reformulado') ? 'block' : 'none';
+
         if (reg.observacion) setValor('observacion', reg.observacion);
     },
     

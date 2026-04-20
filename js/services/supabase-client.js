@@ -182,11 +182,19 @@ const SupabaseClient = {
     getBandejaItems: async function() {
         if (!this.init()) return null;
         try {
+            console.log('📡 Intentando leer tabla: bandeja_entrada...');
             const { data, error } = await this.client
                 .from('bandeja_entrada')
                 .select('*')
                 .order('fecha', { ascending: false });
-            if (error) throw error;
+            
+            if (error) {
+                console.error('❌ Error de Supabase en bandeja_entrada:', error);
+                if (window.Notifications) Notifications.error('Error DB: ' + error.message);
+                throw error;
+            }
+            
+            console.log('✅ Datos recibidos de bandeja:', data ? data.length : 0, 'items');
             return data;
         } catch (error) {
             console.error('Error en getBandejaItems:', error);
@@ -194,14 +202,39 @@ const SupabaseClient = {
         }
     },
     
+    marcarLeidoBandeja: async function(id) {
+        if (!this.init()) return false;
+        try {
+            const { error } = await this.client
+                .from('bandeja_entrada')
+                .update({ leido: true })
+                .eq('id', id);
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error('Error en marcarLeidoBandeja:', error);
+            return false;
+        }
+    },
+    
     guardarBandejaItem: async function(item) {
         if (!this.init()) return null;
         try {
+            // Asegurar que siempre haya un ID único para evitar error 400
+            if (!item.id) {
+                item.id = 'NOT-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 4);
+            }
+
+            console.log('📤 Enviando a bandeja:', item.titulo);
             const { data, error } = await this.client
                 .from('bandeja_entrada')
                 .upsert(item)
                 .select();
-            if (error) throw error;
+            
+            if (error) {
+                console.error('❌ Error al guardar en bandeja:', error);
+                throw error;
+            }
             return data;
         } catch (error) {
             console.error('Error en guardarBandejaItem:', error);

@@ -365,6 +365,20 @@ const OrderImportModule = {
             });
             this.guardarLocal();
             
+            // ENVIAR NOTIFICACIÓN A BANDEJA
+            if (window.SupabaseClient && window.SupabaseClient.guardarBandejaItem) {
+                const usuario = window.getUsuarioActual ? window.getUsuarioActual().username : 'Operador';
+                const itemBandeja = {
+                    id: 'IMP-' + Date.now().toString(36).toUpperCase(),
+                    tipo: 'importacion',
+                    titulo: `📦 Nueva Carga de Órdenes: ${nuevasOrdenes.length} items`,
+                    descripcion: `El usuario ${usuario} ha cargado un nuevo archivo Excel con ${nuevasOrdenes.length} órdenes para procesar.`,
+                    fecha: new Date().toISOString(),
+                    leido: false
+                };
+                window.SupabaseClient.guardarBandejaItem(itemBandeja);
+            }
+
             this.mostrarMensaje(`✅ ${nuevasOrdenes.length} órdenes importadas`, 'success');
             this.renderizar();
         };
