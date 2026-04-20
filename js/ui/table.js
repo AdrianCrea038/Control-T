@@ -35,7 +35,8 @@ const TableUI = {
                 const plotterText = reg.plotter_temp ? 
                     `#${reg.numero_plotter || 0} ${getFixed(reg.plotter_temp)}°/${getFixed(reg.plotter_humedad, 0)}%` : '-';
                 
-                const reemplazoIcon = reg.es_reemplazo ? '🔄 Sí' : '⚙️ No';
+                const esReemplazo = reg.es_reemplazo || (reg.version > 1);
+                const reemplazoIcon = esReemplazo ? '🔄 Sí' : '⚙️ No';
                 const procesoBadge = reg.proceso ? 
                     `<span style="background: ${window.Utils ? Utils.getProcesoColor(reg.proceso) : '#444'}; color:white; padding:0.2rem 0.5rem; border-radius:1rem; font-size:0.7rem;">${reg.proceso}</span>` : '-';
                 

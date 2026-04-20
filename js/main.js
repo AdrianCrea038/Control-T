@@ -2,6 +2,76 @@
 // js/main.js - Punto de entrada principal
 // ============================================================
 
+// ============================================================
+// MODAL DE CONFIRMACIÓN DE EDICIÓN
+// ============================================================
+function mostrarModalConfirmacionEdicion(registro) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('modalConfirmEdicion');
+        const btnOrdenNueva = document.getElementById('btnOptOrdenNueva');
+        const btnReemplazo = document.getElementById('btnOptReemplazo');
+        const seccionMotivo = document.getElementById('seccionMotivoEdicion');
+        const descTipo = document.getElementById('descTipoEdicion');
+        const selectMotivo = document.getElementById('selectMotivoEdicion');
+        const txtOtro = document.getElementById('txtOtroMotivo');
+        const btnCancelar = document.getElementById('btnCancelarConfirm');
+        const btnGuardar = document.getElementById('btnGuardarConfirm');
+
+        let esOrdenNueva = false;
+
+        // Reset inicial
+        modal.classList.add('show');
+        selectMotivo.value = '';
+        txtOtro.value = '';
+        btnReemplazo.classList.add('active');
+        btnOrdenNueva.classList.remove('active');
+        seccionMotivo.style.display = 'block';
+        descTipo.innerText = 'v2+, requiere motivo y genera historial.';
+
+        // Eventos de selección
+        btnOrdenNueva.onclick = () => {
+            esOrdenNueva = true;
+            btnOrdenNueva.classList.add('active');
+            btnReemplazo.classList.remove('active');
+            btnOrdenNueva.style.borderColor = '#00D4FF';
+            btnReemplazo.style.borderColor = '#484F58';
+            seccionMotivo.style.display = 'none';
+            descTipo.innerText = 'v1, resetea historial y marca de editado.';
+        };
+
+        btnReemplazo.onclick = () => {
+            esOrdenNueva = false;
+            btnReemplazo.classList.add('active');
+            btnOrdenNueva.classList.remove('active');
+            btnReemplazo.style.borderColor = '#00D4FF';
+            btnOrdenNueva.style.borderColor = '#484F58';
+            seccionMotivo.style.display = 'block';
+            descTipo.innerText = 'v2+, requiere motivo y genera historial.';
+        };
+
+        btnCancelar.onclick = () => {
+            modal.classList.remove('show');
+            resolve(null);
+        };
+
+        btnGuardar.onclick = () => {
+            let motivoFinal = '';
+            if (esOrdenNueva) {
+                motivoFinal = 'Orden Nueva (Corrección)';
+            } else {
+                if (!selectMotivo.value) {
+                    if (window.Notifications) Notifications.warning('⚠️ Seleccione un motivo de reemplazo');
+                    return;
+                }
+                motivoFinal = selectMotivo.value + (txtOtro.value ? ': ' + txtOtro.value : '');
+            }
+
+            modal.classList.remove('show');
+            resolve({ esOrdenNueva, motivo: motivoFinal });
+        };
+    });
+}
+
 // --- FUNCIONES GLOBALES DE CARGA (Lazy Loading) ---
 window.imprimirEtiqueta = function(id) {
     if (window.PrintingModule) {
@@ -141,6 +211,7 @@ function configurarEventosUI() {
     if (registroForm && window.RecordsModule) {
         registroForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const ahora = new Date().toISOString();
             
             if (!window.puedeEditar || !window.puedeEditar()) {
                 if (window.Notifications) Notifications.error('❌ No tiene permisos para guardar registros');
@@ -152,35 +223,32 @@ function configurarEventosUI() {
             
             if (editId) {
                 const regActual = AppState.getRegistroById(editId);
+                const confirmacion = await mostrarModalConfirmacionEdicion(regActual);
                 
-                // Preguntar tipo de edición
-                const tipoEdicion = prompt('Elija el tipo de edición:\n1 - ORDEN NUEVA (No genera historial ni marca de edición)\n2 - REEMPLAZO (Guarda historial y descripción)', '2');
-                
-                if (tipoEdicion === '1') {
-                    // Orden Nueva: No pedimos descripción y marcamos como limpia
-                    datos.esOrdenNueva = true;
-                    datos.descripcionEdicion = 'Orden Nueva (Corrección)';
-                } else if (tipoEdicion === '2') {
-                    // Reemplazo: Lógica normal de descripción obligatoria
-                    const msg = regActual && regActual.en_produccion ? 
-                        '⚠️ ESTA ORDEN ESTÁ EN PRODUCCIÓN. Describe obligatoriamente los cambios realizados:' : 
-                        '📝 Describe los cambios realizados:';
-                    
-                    datos.descripcionEdicion = prompt(msg, '');
-                    
-                    if (!datos.descripcionEdicion || datos.descripcionEdicion.trim() === '') {
-                        if (window.Notifications) Notifications.warning('⚠️ Es necesario describir los cambios para guardar un REEMPLAZO');
-                        return;
-                    }
-                    datos.esOrdenNueva = false;
+                if (!confirmacion) return; // Cancelado
+
+                if (confirmacion.esOrdenNueva) {
+                    datos.version = 1;
                 } else {
-                    if (window.Notifications) Notifications.info('🚫 Edición cancelada');
-                    return;
+                    datos.version = (regActual.version || 1) + 1;
                 }
+
+                datos.esOrdenNueva = confirmacion.esOrdenNueva;
+                datos.descripcionEdicion = confirmacion.motivo;
                 
                 // Si estaba en producción, mantenemos ese estado al guardar la edición
                 if (regActual && regActual.en_produccion) {
                     datos.en_produccion = true;
+                }
+
+                // Guardar en el historial local
+                if (editId) {
+                    AppState.addHistorialEntry(editId, {
+                        fecha: ahora,
+                        descripcion: datos.descripcionEdicion,
+                        anterior: { ...regActual },
+                        nuevo: { ...datos }
+                    });
                 }
             }
             

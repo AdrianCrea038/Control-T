@@ -284,5 +284,40 @@
             }
         });
     </script>
+    <!-- MODAL DE CONFIRMACIÓN DE EDICIÓN -->
+    <div id="modalConfirmEdicion" class="modal">
+        <div class="modal-content" style="max-width: 450px; background: #0D1117; border: 1px solid #00D4FF; box-shadow: 0 0 20px rgba(0,212,255,0.2);">
+            <h2 style="color: #00D4FF; margin-bottom: 1.5rem; text-align: center;">🛠️ CONFIRMAR EDICIÓN</h2>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.8rem; color: #8B949E; font-size: 0.9rem;">TIPO DE EDICIÓN:</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button id="btnOptOrdenNueva" class="menu-btn" style="padding: 10px; font-size: 0.8rem; border: 1px solid #484F58;">🆕 ORDEN NUEVA</button>
+                    <button id="btnOptReemplazo" class="menu-btn active" style="padding: 10px; font-size: 0.8rem; border: 1px solid #00D4FF;">🔄 REEMPLAZO</button>
+                </div>
+                <p id="descTipoEdicion" style="font-size: 0.75rem; color: #8B949E; margin-top: 8px; text-align: center;">v2+, requiere motivo y genera historial.</p>
+            </div>
+
+            <div id="seccionMotivoEdicion">
+                <label for="selectMotivoEdicion" style="display: block; margin-bottom: 0.5rem; color: #8B949E; font-size: 0.9rem;">MOTIVO DEL REEMPLAZO:</label>
+                <select id="selectMotivoEdicion" class="form-input" style="width: 100%; background: #161B22; border: 1px solid #30363D; color: white; padding: 10px; border-radius: 6px; margin-bottom: 1rem;">
+                    <option value="">Seleccione un motivo...</option>
+                    <option value="Corrección de Color">🎨 Corrección de Color</option>
+                    <option value="Error en Datos (PO/Estilo)">📝 Error en Datos (PO/Estilo)</option>
+                    <option value="Ajuste de Parámetros (Monti/Flat)">⚙️ Ajuste de Parámetros (Monti/Flat)</option>
+                    <option value="Cambio de NK">🧵 Cambio de NK</option>
+                    <option value="Otro (Escribir abajo)">❓ Otro (Escribir abajo)</option>
+                </select>
+
+                <label for="txtOtroMotivo" style="display: block; margin-bottom: 0.5rem; color: #8B949E; font-size: 0.8rem;">COMENTARIO ADICIONAL:</label>
+                <textarea id="txtOtroMotivo" class="form-input" placeholder="Opcional..." style="width: 100%; background: #161B22; border: 1px solid #30363D; color: white; padding: 10px; border-radius: 6px; height: 60px; resize: none;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 2rem;">
+                <button id="btnCancelarConfirm" class="menu-btn" style="flex: 1; background: #21262D; border: 1px solid #F85149; color: #F85149;">CANCELAR</button>
+                <button id="btnGuardarConfirm" class="menu-btn" style="flex: 1; background: #00D4FF; color: #0D1117; font-weight: bold;">GUARDAR</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
