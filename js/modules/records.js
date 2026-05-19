@@ -44,6 +44,7 @@ const RecordsModule = {
             temperatura_flat: datos.temperatura_flat,
             tiempo_flat: datos.tiempo_flat,
             adhesivo: datos.adhesivo,
+            meta: datos.meta || 0,
             es_reemplazo: editId ? (datos.esOrdenNueva ? false : true) : false,
             observacion: datos.observacion || null,
             en_produccion: datos.en_produccion || false,
@@ -164,7 +165,8 @@ const RecordsModule = {
             reformulacion_estado: getValor('reformulacionEstado', 'no_requiere'),
             reformulacion_tiempo: getNumero('reformulacionTiempo', 0),
             descripcionEdicion: null,
-            semana: Utils.obtenerSemana(fecha)
+            semana: Utils.obtenerSemana(fecha),
+            meta: getNumero('cantidadPiezas', 0)
         };
     },
     
@@ -184,6 +186,7 @@ const RecordsModule = {
         setValor('fecha', reg.fecha);
         setValor('estilo', reg.estilo);
         setValor('tela', reg.tela);
+        setValor('cantidadPiezas', reg.meta || reg.make || reg.piezas || 0);
         
         if (window.ColorsModule && window.ColorsModule.cargarEnFormulario) {
             // Usar reg.nks (nueva estructura) o reg.colores (legacy)

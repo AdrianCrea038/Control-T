@@ -170,13 +170,13 @@
 
 .form-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.8rem;
 }
 
 .three-col { grid-template-columns: repeat(3, 1fr); }
-.cuatro-col { grid-template-columns: repeat(3, 1fr); }
-.flat-row { grid-template-columns: repeat(3, 1fr); }
+.cuatro-col { grid-template-columns: repeat(4, 1fr); }
+.flat-row { grid-template-columns: repeat(4, 1fr); }
 .full-width { grid-column: 1 / -1; }
 
 .card-group {

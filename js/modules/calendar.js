@@ -82,11 +82,8 @@ const CalendarUI = {
     },
 
     actualizarBadge: function() {
-        // Semana real del año
-        const ahora     = new Date();
-        const inicioAnio = new Date(ahora.getFullYear(), 0, 1);
-        const dias      = Math.floor((ahora - inicioAnio) / 86400000);
-        const semActual = Math.ceil((dias + inicioAnio.getDay() + 1) / 7);
+        // Semana real del año usando Utils
+        const semActual = window.Utils ? Utils.obtenerSemana(new Date()) : 1;
 
         const badge = document.getElementById('semanaActualBadge');
         if (badge) badge.textContent = AppState.currentSemana || semActual;

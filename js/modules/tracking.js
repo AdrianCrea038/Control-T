@@ -39,14 +39,24 @@ const TrackingModule = {
     
     modoEdicion: false,
     
-    init: function() {
-        console.log('📍 Módulo de Tracking iniciado');
-        // Seleccionar automáticamente la última semana con datos
-        const opciones = this.getSemanasConDatos();
-        if (opciones.length > 0 && !this.semanaSeleccionada) {
-            this.semanaSeleccionada = opciones[0]; // La más reciente
-        } else if (!this.semanaSeleccionada) {
-            this.semanaSeleccionada = this.getSemanaActual();
+    init: async function() {
+        console.log('📍 Sincronizando Tracking con Supabase...');
+        
+        // Forzar actualización de datos desde la nube antes de mostrar nada
+        if (window.OrderImportModule) await window.OrderImportModule.cargarOrdenes();
+        if (window.SupabaseClient) {
+            const nuevosRegistros = await window.SupabaseClient.getRegistros();
+            if (nuevosRegistros) window.AppState.setRegistros(nuevosRegistros);
+        }
+
+        // Sincronizar con AppState si no hay semana seleccionada
+        if (!window.AppState.currentSemana) {
+            const opciones = this.getSemanasConDatos();
+            if (opciones.length > 0) {
+                window.AppState.currentSemana = opciones[0];
+            } else {
+                window.AppState.currentSemana = String(this.getSemanaActual());
+            }
         }
         
         this.cargarMetasGuardadas();
@@ -127,18 +137,20 @@ const TrackingModule = {
     },
     
     renderizarIndicadores: function() {
-        const semanaActual = String(this.getSemanaVisualizada());
+        const semanaActual = String(this.getSemanaVisualizada()).trim();
+        console.log(`📊 Renderizando indicadores para SEMANA: "${semanaActual}"`);
         
-        // 1. CARGA DE DATOS (Forzada para que el filtro funcione siempre)
-        let ordenesImportadas = (window.OrderImportModule && window.OrderImportModule.ordenes) || [];
-        if (ordenesImportadas.length === 0) {
-            const guardadas = localStorage.getItem('alpha_db_ordenes_importadas');
-            if (guardadas) ordenesImportadas = JSON.parse(guardadas);
-        }
+        // 1. CARGA DE DATOS FRESCOS
+        const ordenesImportadas = (window.OrderImportModule && window.OrderImportModule.ordenes) || [];
+        const registrosTotales = (window.AppState && window.AppState.registros) || [];
         
-        const registrosSemana = (window.AppState && window.AppState.registros) || [];
-        
-        // 2. LIMPIEZA DE NÚMEROS (Estricta)
+        // 2. FILTRADO ESTRICTO POR SEMANA
+        const planSemana = ordenesImportadas.filter(o => String(o.semana || '').trim() === semanaActual);
+        const registrosEnSemana = registrosTotales.filter(r => String(r.semana || '').trim() === semanaActual);
+
+        console.log(`🔎 Encontrados ${planSemana.length} órdenes y ${registrosEnSemana.length} registros para la semana ${semanaActual}`);
+
+        // 3. LIMPIEZA DE NÚMEROS
         const parseNum = (val) => {
             if (!val) return 0;
             if (typeof val === 'number') return val;
@@ -146,27 +158,33 @@ const TrackingModule = {
             return parseInt(limpio) || 0;
         };
 
-        const getPiezas = (obj) => {
+        const getPiezas = (obj, sourceOrdenes = []) => {
             if (!obj) return 0;
-            // Prioridad a 'meka' como pediste
-            return parseNum(obj.meka) || parseNum(obj.make) || parseNum(obj.meta) || parseNum(obj.piezas) || parseNum(obj.qty) || parseNum(obj.pcz) || 0;
+            let p = parseNum(obj.meka) || parseNum(obj.make) || parseNum(obj.meta) || parseNum(obj.piezas) || parseNum(obj.qty) || parseNum(obj.pcz) || 0;
+            if (p === 0 && obj.po && sourceOrdenes.length > 0) {
+                const ordenMatch = sourceOrdenes.find(o => String(o.po).trim() === String(obj.po).trim());
+                if (ordenMatch) {
+                    p = parseNum(ordenMatch.meka) || parseNum(ordenMatch.make) || parseNum(ordenMatch.meta) || parseNum(ordenMatch.piezas) || 0;
+                }
+            }
+            return p;
         };
 
-        // 3. FILTRADO POR SEMANA (El filtro manda)
-        const actualLower = semanaActual.trim().toLowerCase();
-        
-        const planSemana = ordenesImportadas.filter(o => {
-            const s = String(o.semana || '').trim().toLowerCase();
-            return s === actualLower || s.includes(actualLower) || actualLower.includes(s);
+        // 4. META REAL (Suma de piezas de POs ÚNICAS registradas en ESTA semana)
+        const metasPorPo = new Map();
+        registrosEnSemana.forEach(r => {
+            const poKey = String(r.po || '').trim();
+            if (poKey && !metasPorPo.has(poKey)) {
+                metasPorPo.set(poKey, getPiezas(r, ordenesImportadas));
+            }
         });
 
-        const registrosEnSemana = registrosSemana.filter(r => {
-            const s = String(r.semana || '').trim().toLowerCase();
-            return s === actualLower || s.includes(actualLower) || actualLower.includes(s);
-        });
+        let metaGlobal = Array.from(metasPorPo.values()).reduce((sum, p) => sum + p, 0);
 
-        // 4. META UNIFICADA (Solo del Excel, sin inventos)
-        let metaGlobal = planSemana.reduce((sum, o) => sum + getPiezas(o), 0);
+        // Fallback: Si no hay registros aún, mostrar la meta del plan de esta semana
+        if (metaGlobal === 0 && planSemana.length > 0) {
+            metaGlobal = planSemana.reduce((sum, o) => sum + getPiezas(o, ordenesImportadas), 0);
+        }
 
         if (metaGlobal === 0 && registrosEnSemana.length === 0) {
             return `
@@ -181,62 +199,69 @@ const TrackingModule = {
         for (let i = 0; i < this.procesos.length; i++) {
             const proceso = this.procesos[i];
             
-            // Sumar piezas solo de registros reales
-            const piezasRealizadas = registrosEnSemana.reduce((sum, r) => {
-                let procesoReg = r.proceso === 'DISEÑO' ? 'COLORIMETRÍA' : (r.proceso || 'COLORIMETRÍA');
-                const idxActual = this.procesos.indexOf(procesoReg);
-                
-                if (idxActual >= i) {
-                    let p = getPiezas(r);
-                    // BÚSQUEDA INTELIGENTE: Si el registro no tiene piezas, buscamos en el Excel original
-                    if (p === 0) {
-                        const ord = planSemana.find(o => o.po_item === r.po || o.po === r.po);
-                        p = ord ? getPiezas(ord) : 0; // Solo lo que diga el Excel, nada de inventos
-                    }
-                    return sum + p;
-                }
-                return sum;
-            }, 0);
-
-            const porcentaje = metaGlobal > 0 ? Math.min(100, Math.round((piezasRealizadas / metaGlobal) * 100)) : 0;
+            let piezasEnEsteProceso = 0; // Están actualmente aquí
+            let piezasQueYaPasaron = 0;  // Ya fluyeron a procesos siguientes
             
-            let color = '#FF4444'; // Rojo (<50%)
-            if (porcentaje >= 85) color = '#00FF88'; // Verde (>=85%)
-            else if (porcentaje >= 50) color = '#F59E0B'; // Naranja (>=50%)
+            registrosEnSemana.forEach(r => {
+                let procesoReg = r.proceso === 'DISEÑO' ? 'COLORIMETRÍA' : (r.proceso || 'COLORIMETRÍA');
+                const idxReg = this.procesos.indexOf(procesoReg);
+                const p = getPiezas(r, ordenesImportadas);
+                
+                if (idxReg === i) {
+                    piezasEnEsteProceso += p;
+                } else if (idxReg > i) {
+                    piezasQueYaPasaron += p;
+                }
+            });
+
+            const totalPiezas = piezasEnEsteProceso + piezasQueYaPasaron;
+            const porcentaje = metaGlobal > 0 ? Math.min(100, Math.round((totalPiezas / metaGlobal) * 100)) : 0;
+            
+            // Lógica de Etiqueta: Sin POs, En Proceso o Realizadas
+            let etiqueta = 'REALIZADAS';
+            if (totalPiezas === 0) {
+                etiqueta = "SIN PO'S";
+            } else if (piezasEnEsteProceso > 0) {
+                etiqueta = 'EN PROCESO';
+            }
+            
+            let color = '#FF4444'; 
+            if (porcentaje >= 85) color = '#00FF88'; 
+            else if (porcentaje >= 50) color = '#F59E0B'; 
             
             html += `
-                <div class="indicador-card" data-proceso="${proceso}" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; padding: 1.25rem;">
+                <div class="indicador-card" data-proceso="${proceso}" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 180px; padding: 0.8rem;">
                     <!-- Nivel 1: Encabezado y Meta -->
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 1.2rem;">${this.getIconoProceso(proceso)}</span>
-                            <span style="font-size: 0.85rem; font-weight: 900; color: #00D4FF; letter-spacing: 0.5px;">${proceso}</span>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 1rem;">${this.getIconoProceso(proceso)}</span>
+                            <span style="font-size: 0.7rem; font-weight: 900; color: #00D4FF; letter-spacing: 0.2px;">${proceso}</span>
                         </div>
-                        <div style="text-align: right; background: rgba(255,255,255,0.03); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-size: 0.6rem; color: #8B949E; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">META</div>
-                            <div style="font-size: 1rem; color: #FFFFFF; font-weight: 900;">${metaGlobal.toLocaleString()}</div>
+                        <div style="text-align: right; background: rgba(255,255,255,0.03); padding: 3px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 0.5rem; color: #8B949E; font-weight: 800; text-transform: uppercase; margin-bottom: 1px;">META</div>
+                            <div style="font-size: 0.75rem; color: #FFFFFF; font-weight: 900;">${metaGlobal.toLocaleString()}</div>
                         </div>
                     </div>
 
                     <!-- Nivel 2: Progreso Principal -->
                     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        <div style="font-size: 3rem; font-weight: 950; color: ${color}; line-height: 1; letter-spacing: -1.5px; text-shadow: 0 0 20px ${color}22;">
-                            ${piezasRealizadas.toLocaleString()}
+                        <div style="font-size: 1.8rem; font-weight: 950; color: ${color}; line-height: 1; letter-spacing: -1px; text-shadow: 0 0 15px ${color}22;">
+                            ${totalPiezas.toLocaleString()}
                         </div>
-                        <div style="font-size: 0.65rem; color: #8B949E; font-weight: 700; text-transform: uppercase; margin-top: 8px; letter-spacing: 1px;">Piezas Realizadas</div>
+                        <div style="font-size: 0.55rem; color: #8B949E; font-weight: 700; text-transform: uppercase; margin-top: 4px; letter-spacing: 0.5px;">${etiqueta}</div>
                     </div>
 
                     <!-- Nivel 3: Barra y Porcentaje -->
-                    <div style="margin-top: 1rem;">
-                        <div style="background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px; margin-bottom: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.03);">
-                            <div style="width: ${porcentaje}%; background: ${color}; height: 100%; border-radius: 3px; transition: width 1s ease-out; box-shadow: 0 0 12px ${color}55;"></div>
+                    <div style="margin-top: 0.6rem;">
+                        <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; margin-bottom: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.03);">
+                            <div style="width: ${porcentaje}%; background: ${color}; height: 100%; border-radius: 2px; transition: width 1s ease-out; box-shadow: 0 0 8px ${color}44;"></div>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: baseline; gap: 4px;">
-                                <span style="color: ${color}; font-size: 1.6rem; font-weight: 950;">${porcentaje}</span>
-                                <span style="color: ${color}; font-size: 0.8rem; font-weight: 800;">%</span>
+                            <div style="display: flex; align-items: baseline; gap: 2px;">
+                                <span style="color: ${color}; font-size: 1.1rem; font-weight: 950;">${porcentaje}</span>
+                                <span style="color: ${color}; font-size: 0.7rem; font-weight: 800;">%</span>
                             </div>
-                            <span style="color: ${color}; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; padding: 4px 10px; background: ${color}15; border-radius: 4px; border: 1px solid ${color}25; letter-spacing: 0.5px;">${this.getEstadoCumplimiento(porcentaje)}</span>
+                            <span style="color: ${color}; font-size: 0.55rem; font-weight: 900; text-transform: uppercase; padding: 3px 6px; background: ${color}15; border-radius: 3px; border: 1px solid ${color}20;">${this.getEstadoCumplimiento(porcentaje)}</span>
                         </div>
                     </div>
                 </div>
@@ -257,7 +282,7 @@ const TrackingModule = {
     },
 
     getSemanaVisualizada: function() {
-        return this.semanaSeleccionada || this.getSemanaActual();
+        return window.AppState.currentSemana || this.getSemanaActual();
     },
 
     getSemanasConDatos: function() {
@@ -453,8 +478,8 @@ const TrackingModule = {
             }
             .indicadores-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 1rem;
+                grid-template-columns: repeat(6, 1fr);
+                gap: 0.5rem;
             }
             .indicador-card {
                 background: #0D1117;
@@ -569,8 +594,8 @@ const TrackingModule = {
             
             .procesos-cards {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                gap: 1rem;
+                grid-template-columns: repeat(6, 1fr);
+                gap: 0.8rem;
                 margin-bottom: 1.5rem;
             }
             .proceso-card {
@@ -737,9 +762,9 @@ const TrackingModule = {
         });
 
         document.getElementById('selectSemanaTracking')?.addEventListener('change', (e) => {
-            this.semanaSeleccionada = e.target.value;
-            console.log('📅 Cambiando vista de Tracking a semana:', this.semanaSeleccionada);
-            this.renderizar();
+            console.log('📅 Sincronizando semana global desde Tracking:', e.target.value);
+            window.AppState.setFiltros(window.AppState.currentSearch, e.target.value);
+            // El renderizado ocurrirá vía onStateChange -> window.onStateChange
         });
     },
     

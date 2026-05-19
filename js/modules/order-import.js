@@ -21,12 +21,7 @@ const OrderImportModule = {
     },
     
     cargarOrdenes: async function() {
-        const guardadas = localStorage.getItem('alpha_db_ordenes_importadas');
-        if (guardadas) {
-            this.ordenes = JSON.parse(guardadas);
-        } else {
-            this.ordenes = [];
-        }
+        console.log('📡 Sincronizando órdenes con Supabase (Fuente Única)...');
         
         if (window.SupabaseClient && window.SupabaseClient.client) {
             try {
@@ -39,6 +34,16 @@ const OrderImportModule = {
                     // MIGRACIÓN: Asegurar que todas tengan semana
                     let huboCambios = false;
                     const ordenesMigradas = data.map(o => {
+                        // 1. Intentar extraer semana del comentario si no existe
+                        if (!o.semana && o.comentario) {
+                            const match = o.comentario.match(/Semana manual: (\d+)/);
+                            if (match) {
+                                o.semana = parseInt(match[1]);
+                                huboCambios = true;
+                            }
+                        }
+                        
+                        // 2. Fallback a fecha de importación
                         if (!o.semana && o.importado_el && window.Utils) {
                             o.semana = Utils.obtenerSemana(new Date(o.importado_el));
                             huboCambios = true;
@@ -48,7 +53,7 @@ const OrderImportModule = {
 
                     this.ordenes = ordenesMigradas;
                     if (huboCambios) {
-                        console.log('🔄 Semanas calculadas para visualización local');
+                        console.log('🔄 Semanas recuperadas/calculadas para visualización local');
                         this.guardarLocal();
                     }
                 }

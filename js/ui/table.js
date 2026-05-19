@@ -73,6 +73,7 @@ const TableUI = {
                     <td>${procesoBadge}</td>
                     <td>${reemplazoIcon}</td>
                     <td>${reg.semana || '-'}</td>
+                    <td><span style="color:#00D4FF; font-weight:bold;">${reg.meta || reg.make || reg.piezas || 0}</span></td>
                     <td>${window.Utils ? Utils.formatearFecha(reg.fecha) : reg.fecha}</td>
                     <td>${reg.estilo || '-'}</td>
                     <td colspan="2">${nksHtml}</td>

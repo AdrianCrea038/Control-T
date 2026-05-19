@@ -99,6 +99,10 @@ document.addEventListener('DOMContentLoaded', function() {
     window.onStateChange = function() {
         if (window.TableUI && TableUI.actualizar) TableUI.actualizar();
         if (window.CalendarUI && CalendarUI.actualizar) CalendarUI.actualizar();
+        if (window.TrackingModule && typeof TrackingModule.renderizar === 'function') {
+            const panel = document.getElementById('trackingPanel');
+            if (panel) TrackingModule.renderizar();
+        }
     };
     
     const hoy = new Date().toISOString().split('T')[0];
