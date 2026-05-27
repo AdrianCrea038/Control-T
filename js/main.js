@@ -223,31 +223,48 @@ function configurarEventosUI() {
             }
             
             const datos = window.RecordsModule.obtenerFormulario();
-            const editId = document.getElementById('editId').value;
+            let editId = document.getElementById('editId').value;
             
-            if (editId) {
-                const regActual = AppState.getRegistroById(editId);
+            // Verificar si la PO ya existe en la base de datos (para mostrar diálogo de Nueva o Reformular)
+            let regExistente = null;
+            if (!editId && AppState && AppState.registros) {
+                // Buscamos si hay algún registro existente con la misma PO
+                regExistente = AppState.registros.find(r => r.po && r.po.toUpperCase() === datos.po.toUpperCase());
+            }
+
+            // Si estamos editando o si la PO ya existe en la BD (lo cual indica que podría ser un reemplazo/reformulación o una orden nueva de una existente)
+            if (editId || regExistente) {
+                const regActual = editId ? AppState.getRegistroById(editId) : regExistente;
+                
+                // Mostramos el modal de confirmación de edición/reemplazo
                 const confirmacion = await mostrarModalConfirmacionEdicion(regActual);
                 
                 if (!confirmacion) return; // Cancelado
 
                 if (confirmacion.esOrdenNueva) {
                     datos.version = 1;
+                    datos.esOrdenNueva = true;
+                    // Al ser orden nueva, nos aseguramos de que no se use un editId para no sobreescribir el existente
+                    document.getElementById('editId').value = '';
+                    editId = '';
                 } else {
                     datos.version = (regActual.version || 1) + 1;
+                    datos.esOrdenNueva = false;
+                    // Al ser reemplazo, asignamos el ID al input editId para que RecordsModule.guardar lo reconozca
+                    document.getElementById('editId').value = regActual.id;
+                    editId = regActual.id;
+                    
+                    // Si estaba en producción, mantenemos ese estado al guardar el reemplazo
+                    if (regActual && regActual.en_produccion) {
+                        datos.en_produccion = true;
+                    }
                 }
 
-                datos.esOrdenNueva = confirmacion.esOrdenNueva;
                 datos.descripcionEdicion = confirmacion.motivo;
                 
-                // Si estaba en producción, mantenemos ese estado al guardar la edición
-                if (regActual && regActual.en_produccion) {
-                    datos.en_produccion = true;
-                }
-
                 // Guardar en el historial local
-                if (editId) {
-                    AppState.addHistorialEntry(editId, {
+                if (regActual && regActual.id) {
+                    AppState.addHistorialEntry(regActual.id, {
                         fecha: ahora,
                         descripcion: datos.descripcionEdicion,
                         anterior: { ...regActual },
