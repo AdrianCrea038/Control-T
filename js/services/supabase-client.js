@@ -170,6 +170,22 @@ const SupabaseClient = {
         }
     },
     
+    actualizarEstadoSolicitud: async function(id, estado) {
+        if (!this.init()) return false;
+        try {
+            const { error } = await this.client
+                .from('solicitudes')
+                .update({ estado: estado })
+                .eq('id', id);
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error('Error en actualizarEstadoSolicitud:', error);
+            if (window.Notifications) Notifications.error('Error DB: ' + error.message);
+            return false;
+        }
+    },
+    
     eliminarSolicitud: async function(id) {
         if (!this.init()) return false;
         try {

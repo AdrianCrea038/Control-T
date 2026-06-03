@@ -241,16 +241,75 @@ const InboxModule = {
                         <span style="color: #FFFFFF; font-weight: 700;">${item.estilo || '---'}</span>
                     </div>
                 </div>` : ''}
+                ${item.datosCompletos && item.datosCompletos.detalles && item.datosCompletos.detalles.length > 0 ? `
+                <div style="margin-top: 1.5rem; background: #0D1117; border: 1px solid #30363D; padding: 1.5rem; border-radius: 12px;">
+                    <label style="display: block; font-size: 0.65rem; color: #8B949E; text-transform: uppercase; margin-bottom: 10px;">NKs y Colores Solicitados</label>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #30363D; color: #8B949E; text-align: left;">
+                                <th style="padding: 5px;">NK (TELA)</th>
+                                <th style="padding: 5px;">COLOR</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${item.datosCompletos.detalles.map(d => `
+                                <tr style="border-bottom: 1px solid #161B22;">
+                                    <td style="padding: 8px 5px; color: #FFF; font-weight: 700;">${d.nk}</td>
+                                    <td style="padding: 8px 5px; color: #FFF;">${d.color}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>` : ''}
 
-                <div style="margin-top: 3rem; display: flex; gap: 1rem;">
+                <div style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
                     ${item.tipo === 'produccion' ? 
                         `<button onclick="Sidebar.mostrarProduccion()" style="background: #00D4FF; color: #0D1117; border: none; padding: 1rem 2rem; border-radius: 8px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 15px rgba(0,212,255,0.3);">IR AL TABLERO DE PRODUCCIÓN</button>` : ''}
                     
                     ${item.tipo === 'solicitud' ? 
-                        `<button onclick="Sidebar.mostrarSolicitudes()" style="background: #F59E0B; color: #0D1117; border: none; padding: 1rem 2rem; border-radius: 8px; font-weight: 900; cursor: pointer;">VER SOLICITUD EN PLANTA</button>` : ''}
+                        `
+                        <button onclick="InboxModule.cambiarEstadoSolicitud(event, '${item.solicitudId}', 'en_proceso')" style="background: #FF8C00; color: #0D1117; border: none; padding: 0.8rem 1.2rem; border-radius: 8px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;">⏳ EN PROCESO</button>
+                        <button onclick="InboxModule.cambiarEstadoSolicitud(event, '${item.solicitudId}', 'completada')" style="background: #00FF88; color: #0D1117; border: none; padding: 0.8rem 1.2rem; border-radius: 8px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;">✅ FINALIZADO</button>
+                        <button onclick="Sidebar.mostrarSolicitudes()" style="background: #F59E0B; color: #0D1117; border: none; padding: 0.8rem 1.2rem; border-radius: 8px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;">👁️ VER SEGUIMIENTO</button>
+                        ` : ''}
                 </div>
             </div>
         `;
+    },
+
+    cambiarEstadoSolicitud: async function(event, solicitudId, estado) {
+        if (!solicitudId) {
+            if (window.Notifications) Notifications.error('Error: ID de solicitud no encontrado en la bandeja');
+            return;
+        }
+        
+        const btn = event.currentTarget;
+        const htmlOriginal = btn.innerHTML;
+        const colorOriginal = btn.style.background;
+        
+        // Estado de "Cargando"
+        btn.innerHTML = '⌛ ACTUALIZANDO...';
+        btn.style.opacity = '0.7';
+        btn.disabled = true;
+
+        if (window.SupabaseClient && window.SupabaseClient.actualizarEstadoSolicitud) {
+            const res = await window.SupabaseClient.actualizarEstadoSolicitud(solicitudId, estado);
+            if (res) {
+                if (window.Notifications) Notifications.success('✅ Estado de la solicitud actualizado');
+                // Estado "Completado"
+                btn.innerHTML = '✔️ ACTUALIZADO';
+                btn.style.background = '#21262D';
+                btn.style.color = '#8B949E';
+                btn.style.border = '1px solid #30363D';
+            } else {
+                if (window.Notifications) Notifications.error('❌ Error al actualizar estado');
+                // Restaurar botón
+                btn.innerHTML = htmlOriginal;
+                btn.style.background = colorOriginal;
+                btn.style.opacity = '1';
+                btn.disabled = false;
+            }
+        }
     },
 
     ocultarItem: function(id) {
