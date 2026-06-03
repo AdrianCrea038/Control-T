@@ -164,7 +164,8 @@ const SupabaseClient = {
             if (error) throw error;
             return data;
         } catch (error) {
-            console.error('Error en guardarSolicitud:', error);
+            console.error('Error en guardarSolicitud Detalles:', JSON.stringify(error, null, 2));
+            if (window.Notifications) Notifications.error('Error DB: ' + (error.message || error.details || 'Columna no existe en Supabase'));
             return null;
         }
     },
@@ -245,6 +246,7 @@ const SupabaseClient = {
             return data;
         } catch (error) {
             console.error('Error en guardarBandejaItem:', error);
+            if (window.Notifications) Notifications.error('Error DB (Bandeja): ' + error.message);
             return null;
         }
     },

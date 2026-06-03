@@ -39,9 +39,8 @@ const SolicitudesModule = {
                             <label style="color: #00D4FF; font-weight: 800; font-size: 0.8rem; display: block; margin-bottom: 0.8rem; text-transform: uppercase;">➕ Crear Nuevo Reporte:</label>
                             <select id="tipoSolicitudSelect" style="width: 100%; background: #0D1117; border: 1px solid #30363D; color: white; padding: 0.8rem; border-radius: 8px; font-size: 0.9rem; cursor: pointer;">
                                 <option value="">-- Seleccionar Categoría --</option>
-                                <option value="rh">🎨 Rechazo de Color (RH)</option>
+                                <option value="rh">🎨 Revalidar Color</option>
                                 <option value="orden_nueva">📦 Orden Nueva (Faltante)</option>
-                                <option value="lote_ftt">🏭 Lote FTT (Muestra)</option>
                             </select>
                         </div>
 
@@ -88,8 +87,7 @@ const SolicitudesModule = {
                             
                             <div class="filtros-tabs" style="display: flex; background: #0D1117; padding: 0.3rem; border-radius: 8px; border: 1px solid #30363D;">
                                 <button onclick="SolicitudesModule.filtrarTabla('todos')" class="tab-btn active" data-tipo="todos" style="padding: 0.4rem 0.8rem; font-size: 0.65rem; background: #00D4FF; color: #0D1117; border: none; border-radius: 6px; cursor: pointer; font-weight: 900; transition: all 0.2s;">TODOS</button>
-                                <button onclick="SolicitudesModule.filtrarTabla('rh')" class="tab-btn" data-tipo="rh" style="padding: 0.4rem 0.8rem; font-size: 0.65rem; background: transparent; color: #8B949E; border: none; border-radius: 6px; cursor: pointer; font-weight: 700;">RH</button>
-                                <button onclick="SolicitudesModule.filtrarTabla('lote_ftt')" class="tab-btn" data-tipo="lote_ftt" style="padding: 0.4rem 0.8rem; font-size: 0.65rem; background: transparent; color: #8B949E; border: none; border-radius: 6px; cursor: pointer; font-weight: 700;">FTT</button>
+                                <button onclick="SolicitudesModule.filtrarTabla('rh')" class="tab-btn" data-tipo="rh" style="padding: 0.4rem 0.8rem; font-size: 0.65rem; background: transparent; color: #8B949E; border: none; border-radius: 6px; cursor: pointer; font-weight: 700;">REVALIDAR</button>
                                 <button onclick="SolicitudesModule.filtrarTabla('orden_nueva')" class="tab-btn" data-tipo="orden_nueva" style="padding: 0.4rem 0.8rem; font-size: 0.65rem; background: transparent; color: #8B949E; border: none; border-radius: 6px; cursor: pointer; font-weight: 700;">NUEVAS</button>
                             </div>
                         </div>
@@ -156,14 +154,12 @@ const SolicitudesModule = {
         
         const titulos = {
             'orden_nueva': '📦 ORDEN FALTANTE',
-            'rh': '🎨 RECHAZO DE COLOR (RH)',
-            'lote_ftt': '🏭 SOLICITUD DE LOTE FTT'
+            'rh': '🎨 REVALIDAR COLOR'
         };
         
         const btnLabels = {
             'orden_nueva': '+ AGREGAR OTRO MODELO/TELA',
-            'rh': '+ AGREGAR OTRO COLOR/NK',
-            'lote_ftt': '+ AGREGAR OTRA MUESTRA (FTT)'
+            'rh': '+ AGREGAR OTRO COLOR/NK'
         };
         
         if (formularioTitulo) formularioTitulo.textContent = titulos[this.tipoSeleccionado] || 'REPORTE';
